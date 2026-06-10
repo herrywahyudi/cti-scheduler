@@ -509,7 +509,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
     <div class="card-title">
       👥 Joiner List
       <span id="joinerBadge" style="background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">0</span>
-      <span style="margin-left:auto;font-size:10px;color:var(--g400);font-weight:400;text-transform:none;letter-spacing:0">Scheduled ≤ window before embark date</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--g400);font-weight:400;text-transform:none;letter-spacing:0">Auto-assigned within embark window</span>
     </div>
     <div class="joiner-search">
       <input type="text" id="searchInput" placeholder="🔍 Search name, position, ship…" oninput="renderJoinerList()">
@@ -1312,7 +1312,7 @@ function renderJoinerList() {
     div.innerHTML = `
       <div class="ji-body">
         <div class="ji-name">${j.name} ${isDl ? '<span style="color:var(--green);font-size:10px">✓ Sent</span>' : ''}</div>
-        <div class="ji-meta">${j.position} · E-${j.e_number} · Embark ${j.embark_date}${schedDate ? ' · 📅 ' + schedDate : ' · <span style="color:var(--amber);font-weight:600">Not scheduled</span>'}${noEmail ? ' · <span style="color:var(--red);font-weight:600">No email</span>' : ''}</div>
+        <div class="ji-meta">${j.position} · E-${j.e_number} · Embark ${j.embark_date}${schedDate ? ' · 📅 ' + schedDate : ' · <span style="color:var(--amber);font-weight:600">Outside window</span>'}${noEmail ? ' · <span style="color:var(--red);font-weight:600">No email</span>' : ''}</div>
       </div>
       <div class="ji-ship">${j.ship}</div>`;
     list.appendChild(div);
