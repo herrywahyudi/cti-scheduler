@@ -516,6 +516,13 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
       <select id="shipFilter" onchange="renderJoinerList()"><option value="">All Ships</option></select>
       <select id="deptFilter" onchange="renderJoinerList()"><option value="">All Depts</option></select>
     </div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:9px;align-items:center">
+      <div style="font-size:11px;font-weight:600;color:var(--g400);text-transform:uppercase;letter-spacing:.3px;white-space:nowrap">Embark date:</div>
+      <input type="date" id="embarkFrom" onchange="renderJoinerList()" style="flex:1;min-width:120px;font-size:12px;padding:6px 8px">
+      <div style="font-size:11px;color:var(--g400)">→</div>
+      <input type="date" id="embarkTo" onchange="renderJoinerList()" style="flex:1;min-width:120px;font-size:12px;padding:6px 8px">
+      <button class="btn btn-ghost btn-sm" onclick="clearDateFilter()" style="font-size:11px;padding:5px 9px;white-space:nowrap">Clear</button>
+    </div>
     <div id="noDataMsg" class="empty-msg">📂 Upload a Joiners Report Excel file to get started</div>
     <div class="joiner-list" id="joinerList" style="display:none"></div>
   </div>
@@ -1268,15 +1275,28 @@ function renderCCChips() {
 }
 
 // ── JOINER LIST ────────────────────────────────────────────────────────────────
+function clearDateFilter() {
+  document.getElementById('embarkFrom').value = '';
+  document.getElementById('embarkTo').value = '';
+  renderJoinerList();
+}
+
 function renderJoinerList() {
   if (!joiners.length) return;
   const q = document.getElementById('searchInput').value.toLowerCase();
   const ship = document.getElementById('shipFilter').value;
   const dept = document.getElementById('deptFilter').value;
+  const from = document.getElementById('embarkFrom').value;
+  const to = document.getElementById('embarkTo').value;
   const scheduled = new Set(Object.values(schedule).flat().map(s => s.joiner.e_number));
   const filtered = joiners.filter(j => {
     const text = (j.name + j.position + j.ship + j.department + j.e_number).toLowerCase();
-    return (!q || text.includes(q)) && (!ship || j.ship === ship) && (!dept || j.department === dept);
+    const matchText = !q || text.includes(q);
+    const matchShip = !ship || j.ship === ship;
+    const matchDept = !dept || j.department === dept;
+    const matchFrom = !from || j.embark_date >= from;
+    const matchTo = !to || j.embark_date <= to;
+    return matchText && matchShip && matchDept && matchFrom && matchTo;
   });
   document.getElementById('joinerBadge').textContent = filtered.length;
   const list = document.getElementById('joinerList');
@@ -1285,14 +1305,13 @@ function renderJoinerList() {
   filtered.forEach(j => {
     const isSched = scheduled.has(j.e_number);
     const noEmail = !j.email;
-    // Find which day
     const schedDate = Object.keys(schedule).find(d => schedule[d].some(s => s.joiner.e_number === j.e_number));
     const isDl = schedDate && downloadedDays.has(schedDate);
     const div = document.createElement('div');
     div.className = 'ji' + (isDl ? ' downloaded' : isSched ? ' scheduled' : '') + (noEmail ? ' no-email' : '');
     div.innerHTML = `
       <div class="ji-body">
-        <div class="ji-name">${j.name} ${isDl ? '<span style="color:var(--green);font-size:10px">✓ Downloaded</span>' : ''}</div>
+        <div class="ji-name">${j.name} ${isDl ? '<span style="color:var(--green);font-size:10px">✓ Sent</span>' : ''}</div>
         <div class="ji-meta">${j.position} · E-${j.e_number} · Embark ${j.embark_date}${schedDate ? ' · 📅 ' + schedDate : ' · <span style="color:var(--amber);font-weight:600">Not scheduled</span>'}${noEmail ? ' · <span style="color:var(--red);font-weight:600">No email</span>' : ''}</div>
       </div>
       <div class="ji-ship">${j.ship}</div>`;
