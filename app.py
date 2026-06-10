@@ -13,33 +13,13 @@ st.set_page_config(
 # ── CSS ───────────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-[data-testid="stSidebar"] { background: #0d1e3c; }
-[data-testid="stSidebar"] * { color: #e2e8f0 !important; }
-[data-testid="stSidebar"] .stSelectbox label,
-[data-testid="stSidebar"] .stTextInput label,
-[data-testid="stSidebar"] .stTextArea label,
-[data-testid="stSidebar"] .stTimeInput label,
-[data-testid="stSidebar"] .stDateInput label { 
-    color: #94a3b8 !important; font-size: 11px !important; 
-    text-transform: uppercase; letter-spacing: 0.5px;
-}
 .metric-card {
     background: #fff; border-radius: 10px; padding: 16px 20px;
     border: 1.5px solid #eaeff7; margin-bottom: 8px;
 }
-.joiner-row {
-    display: flex; align-items: center; gap: 10px;
-    padding: 10px 14px; border-radius: 8px; margin-bottom: 6px;
-    background: #f1f5fb; border: 1.5px solid #eaeff7;
+div[data-testid="stButton"] button[kind="primary"] {
+    background: #0072ce; border: none;
 }
-.joiner-row.sent { background: #dcfce7; border-color: #86efac; }
-.joiner-row.error { background: #fee2e2; border-color: #fca5a5; }
-.tag { 
-    font-size: 10px; font-weight: 700; padding: 2px 8px; 
-    border-radius: 10px; background: #0d1e3c; color: white;
-}
-.tag.sent { background: #16a34a; }
-.tag.error { background: #dc2626; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -523,3 +503,103 @@ with dl_col2:
                 )
             else:
                 st.warning("No scheduled meetings in current filter.")
+
+st.divider()
+
+# ── MANUAL INVITE ─────────────────────────────────────────────────────────────
+st.markdown("### ✍️ Manual Invite")
+st.caption("Send a Teams meeting to anyone — from the joiner list or enter details manually.")
+
+tab_list, tab_custom = st.tabs(["Pick from Joiner List", "Enter Manually"])
+
+with tab_list:
+    if not joiners:
+        st.info("Upload a Joiners Report first.")
+    else:
+        joiner_options = {f"{j['name']} · {j['position']} · {j['ship']} · Embark {j['embark_date']}": j 
+                         for j in joiners if j['email']}
+        if not joiner_options:
+            st.warning("No joiners with email addresses found.")
+        else:
+            selected_label = st.selectbox("Select Joiner", list(joiner_options.keys()), 
+                                           label_visibility="collapsed")
+            selected_joiner = joiner_options[selected_label]
+            
+            mc1, mc2 = st.columns(2)
+            with mc1:
+                manual_date_list = st.date_input("Meeting Date", value=date.today(), key="manual_date_list")
+            with mc2:
+                manual_time_list = st.time_input("Meeting Time", 
+                                                  value=datetime.strptime("09:00", "%H:%M").time(),
+                                                  key="manual_time_list")
+            
+            if st.button("📅 Send Teams Invite", key="send_manual_list", use_container_width=True, type="primary"):
+                slot = {'time': manual_time_list.strftime('%H:%M'), 'joiner': selected_joiner}
+                ds = manual_date_list.strftime('%Y-%m-%d')
+                try:
+                    with st.spinner(f"Creating Teams meeting for {selected_joiner['name']}…"):
+                        create_teams_meeting(slot, ds, subject, body_text, org_name, org_email, cc_emails)
+                    st.session_state.sent_status[selected_joiner['e_number']] = 'sent'
+                    st.success(f"✅ Teams invite sent to {selected_joiner['name']} — {ds} at {slot['time']}")
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Failed to send: {e}")
+                    # Fallback: offer .ics download
+                    event = build_ics_event(ds, slot, subject, body_text, org_name, org_email, cc_emails, teams_link)
+                    ics = build_ics_file([event], org_name)
+                    safe_name = selected_joiner['name'].replace(' ', '_')
+                    st.download_button(
+                        "📥 Download .ics instead",
+                        data=ics.encode('utf-8'),
+                        file_name=f"Assessment_{safe_name}_{ds}.ics",
+                        mime="text/calendar"
+                    )
+
+with tab_custom:
+    st.caption("For candidates not in the current joiner file.")
+    cc1, cc2 = st.columns(2)
+    with cc1:
+        manual_name = st.text_input("Full Name", placeholder="e.g. John Smith")
+        manual_position = st.text_input("Position (optional)", placeholder="e.g. Dining Steward")
+        manual_date_custom = st.date_input("Meeting Date", value=date.today(), key="manual_date_custom")
+    with cc2:
+        manual_email = st.text_input("Email Address", placeholder="john@gmail.com")
+        manual_ship = st.text_input("Ship (optional)", placeholder="e.g. Queen Anne")
+        manual_time_custom = st.time_input("Meeting Time",
+                                            value=datetime.strptime("09:00", "%H:%M").time(),
+                                            key="manual_time_custom")
+
+    if st.button("📅 Send Teams Invite", key="send_manual_custom", use_container_width=True, type="primary"):
+        if not manual_name or not manual_email:
+            st.warning("Please enter a name and email.")
+        elif '@' not in manual_email:
+            st.warning("Please enter a valid email address.")
+        else:
+            custom_joiner = {
+                'e_number': f"MANUAL-{int(datetime.now().timestamp())}",
+                'name': manual_name,
+                'email': manual_email,
+                'position': manual_position or '',
+                'ship': manual_ship or '',
+                'embark_date': '',
+                'embark_port': '',
+                'department': '',
+                'cti_office': ''
+            }
+            slot = {'time': manual_time_custom.strftime('%H:%M'), 'joiner': custom_joiner}
+            ds = manual_date_custom.strftime('%Y-%m-%d')
+            try:
+                with st.spinner(f"Creating Teams meeting for {manual_name}…"):
+                    create_teams_meeting(slot, ds, subject, body_text, org_name, org_email, cc_emails)
+                st.success(f"✅ Teams invite sent to {manual_name} — {ds} at {slot['time']}")
+            except Exception as e:
+                st.error(f"Failed to send: {e}")
+                event = build_ics_event(ds, slot, subject, body_text, org_name, org_email, cc_emails, teams_link)
+                ics = build_ics_file([event], org_name)
+                safe_name = manual_name.replace(' ', '_')
+                st.download_button(
+                    "📥 Download .ics instead",
+                    data=ics.encode('utf-8'),
+                    file_name=f"Assessment_{safe_name}_{ds}.ics",
+                    mime="text/calendar"
+                )
