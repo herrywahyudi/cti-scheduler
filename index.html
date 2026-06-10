@@ -1,0 +1,1376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CTI Pre-Embarkation Assessment Scheduler</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0d1e3c;--accent:#0072ce;--accent-lt:#e6f2fc;
+  --white:#fff;--bg:#f1f5fb;--g100:#eaeff7;--g200:#d5dde9;--g400:#8a96b0;--g600:#4a5568;
+  --text:#1a2540;--green:#16a34a;--green-bg:#dcfce7;--red:#dc2626;--red-bg:#fee2e2;
+  --amber:#d97706;--amber-bg:#fef3c7;--r:10px;--sh:0 2px 16px rgba(13,30,60,.09);
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px}
+
+/* Header */
+header{background:var(--navy);padding:13px 24px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.2)}
+.logo{font-size:16px;font-weight:700;color:#fff;letter-spacing:-.4px;display:flex;align-items:baseline;gap:7px}
+.logo-brand{font-size:20px;font-weight:800;color:#fff;letter-spacing:-.5px}
+.logo-brand span{color:#60a5fa}
+.logo-divider{width:1px;height:16px;background:rgba(255,255,255,.2);align-self:center}
+.logo-product{font-size:14px;font-weight:600;color:#e2e8f0;letter-spacing:-.2px}
+.logo-product em{color:#94a3b8;font-style:normal;font-weight:400;font-size:13px}
+.logo-sub{font-size:10px;color:#64748b;margin-top:2px}
+.hdr-pills{margin-left:auto;display:flex;gap:7px;align-items:center;flex-wrap:wrap}
+.hdr-pill{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12);color:#cbd5e1;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px}
+.hdr-pill.green{background:rgba(22,163,74,.15);border-color:rgba(22,163,74,.3);color:#86efac}
+
+/* Layout */
+.layout{display:grid;grid-template-columns:310px 1fr;min-height:calc(100vh - 50px)}
+@media(max-width:860px){.layout{grid-template-columns:1fr}}
+.sidebar{background:#fff;border-right:1px solid var(--g200);padding:14px;overflow-y:auto;max-height:calc(100vh - 50px);position:sticky;top:50px}
+.main{padding:18px;overflow-y:auto}
+
+/* Cards */
+.card{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px;display:flex;align-items:center;gap:6px}
+.sdot{width:17px;height:17px;border-radius:50%;background:var(--navy);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+
+/* Form */
+label{display:block;font-size:11px;font-weight:600;color:var(--g600);margin-bottom:3px;text-transform:uppercase;letter-spacing:.3px}
+input[type=text],input[type=date],input[type=time],input[type=email],select,textarea{
+  width:100%;padding:7px 10px;border:1.5px solid var(--g200);border-radius:7px;font-size:13px;
+  font-family:inherit;color:var(--text);background:var(--bg);transition:border-color .15s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#fff}
+.fr{margin-bottom:9px}
+.fr2{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:9px}
+
+/* Organizer box */
+.org-box{background:var(--accent-lt);border:1.5px solid #bfdbfe;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:10px;margin-bottom:9px}
+.org-avatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#0072ce);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:#fff;flex-shrink:0;text-transform:uppercase}
+.org-name{font-size:13px;font-weight:600;color:var(--navy)}
+.org-sub{font-size:10px;color:var(--g400)}
+
+/* Chip input */
+.chips{min-height:34px;padding:3px 7px;border:1.5px solid var(--g200);border-radius:7px;background:var(--bg);display:flex;flex-wrap:wrap;gap:4px;cursor:text;align-items:center}
+.chips:focus-within{border-color:var(--accent);background:#fff}
+.chip{background:var(--navy);color:#fff;font-size:11px;padding:2px 7px 2px 8px;border-radius:20px;display:flex;align-items:center;gap:4px;font-weight:500}
+.chip button{background:none;border:none;color:#94a3b8;cursor:pointer;font-size:13px;padding:0;line-height:1}
+.chip button:hover{color:#fff}
+.chip-input{flex:1;min-width:120px;border:none;background:transparent;font-size:12px;padding:2px 4px;outline:none}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:5px;padding:8px 15px;border-radius:7px;font-size:13px;font-weight:600;cursor:pointer;border:none;transition:all .15s;font-family:inherit}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{background:#005bb5}
+.btn-primary:disabled{opacity:.45;cursor:not-allowed}
+.btn-success{background:var(--green);color:#fff}.btn-success:hover{background:#15803d}
+.btn-ghost{background:var(--g100);color:var(--g600)}.btn-ghost:hover{background:var(--g200)}
+.btn-danger{background:var(--red-bg);color:var(--red)}.btn-danger:hover{background:#fecaca}
+.btn-sm{padding:5px 10px;font-size:11px;border-radius:5px}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap}
+
+/* Upload zone */
+.upload-zone{border:2px dashed var(--g200);border-radius:var(--r);padding:18px 14px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-lt)}
+.upload-zone.loaded{border-color:var(--green);background:var(--green-bg);border-style:solid}
+.upload-icon{font-size:22px;margin-bottom:5px}
+.upload-text{font-size:12px;color:var(--g400);font-weight:500;line-height:1.5}
+.upload-text strong{color:var(--accent)}
+#fileInput{display:none}
+
+/* Calendar */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.cal-nav h3{font-size:14px;font-weight:700;color:var(--navy)}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-dow{text-align:center;font-size:9px;font-weight:700;color:var(--g400);padding:2px 0;text-transform:uppercase}
+.cal-day{border-radius:6px;padding:4px;min-height:58px;background:var(--bg);border:1.5px solid transparent;cursor:pointer;transition:all .13s;position:relative;font-size:11px}
+.cal-day:hover{border-color:var(--accent);background:var(--accent-lt)}
+.cal-day.other-month{opacity:.25;pointer-events:none}
+.cal-day.blocked{background:var(--red-bg)!important;border-color:#fca5a5!important}
+.cal-day.has-meetings{border-color:var(--accent);background:var(--accent-lt)}
+.cal-day.today{border-color:var(--amber)!important}
+.cal-day.selected-day{border-color:var(--navy)!important;background:#e0e7ff!important}
+.cal-day.downloaded{border-color:var(--green)!important;background:var(--green-bg)!important}
+.day-num{font-size:11px;font-weight:700;color:var(--g600)}
+.cal-day.blocked .day-num{color:var(--red)}
+.cal-day.downloaded .day-num{color:var(--green)}
+.day-info{font-size:9px;font-weight:600;margin-top:1px}
+.day-mtg{color:var(--accent)}
+.day-blocked{color:var(--red)}
+.day-dl{color:var(--green)}
+.day-dots{display:flex;flex-wrap:wrap;gap:2px;margin-top:2px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--accent)}
+.dot.dl{background:var(--green)}
+
+/* Day panel */
+.day-panel{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:14px}
+.dp-title{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+.dp-actions{display:flex;gap:6px;flex-wrap:wrap}
+.slot-grid{display:flex;flex-direction:column;gap:5px}
+.slot-row{display:flex;align-items:center;gap:9px;padding:7px 9px;border:1.5px solid var(--g100);border-radius:7px;background:var(--bg)}
+.slot-row.filled{background:var(--accent-lt);border-color:var(--accent)}
+.slot-row.downloaded{background:var(--green-bg);border-color:#86efac}
+.slot-time{font-size:11px;font-weight:700;color:var(--accent);width:44px;flex-shrink:0}
+.slot-row.downloaded .slot-time{color:var(--green)}
+.slot-info{flex:1;min-width:0}
+.slot-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot-sub{font-size:10px;color:var(--g400);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.slot-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0}
+.badge-ready{background:var(--accent-lt);color:var(--accent)}
+.badge-dl{background:var(--green-bg);color:var(--green)}
+
+/* Download panel */
+.dl-panel{background:linear-gradient(135deg,#0f2a5c,#1a3a6e);border-radius:var(--r);padding:18px;margin-bottom:14px;color:#fff}
+.dl-panel h3{font-size:14px;font-weight:700;margin-bottom:5px}
+.dl-panel p{font-size:12px;color:#93c5fd;margin-bottom:14px;line-height:1.5}
+.dl-options{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media(max-width:500px){.dl-options{grid-template-columns:1fr}}
+.dl-option{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);border-radius:8px;padding:12px;cursor:pointer;transition:all .15s;text-align:center}
+.dl-option:hover{background:rgba(255,255,255,.15);border-color:rgba(255,255,255,.3)}
+.dl-option .dl-icon{font-size:22px;margin-bottom:5px}
+.dl-option .dl-label{font-size:12px;font-weight:700;color:#e2e8f0}
+.dl-option .dl-sub{font-size:10px;color:#94a3b8;margin-top:2px}
+.dl-option.highlight{background:rgba(96,165,250,.15);border-color:rgba(96,165,250,.4)}
+.dl-option.highlight .dl-label{color:#93c5fd}
+
+/* Instructions */
+.how-to{background:#fff;border-radius:var(--r);box-shadow:var(--sh);padding:16px;margin-bottom:14px}
+.step-item{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--g100)}
+.step-item:last-child{border:none}
+.step-num{width:20px;height:20px;border-radius:50%;background:var(--accent);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px}
+.step-text{font-size:12px;color:var(--g600);line-height:1.5}
+.step-text strong{color:var(--text)}
+
+/* Joiner list */
+.joiner-search{display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap}
+.joiner-search input,.joiner-search select{flex:1;min-width:100px;font-size:12px}
+.joiner-list{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.ji{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1.5px solid var(--g100);border-radius:6px;transition:all .13s}
+.ji.scheduled{background:var(--accent-lt);border-color:var(--accent)}
+.ji.no-email{background:var(--amber-bg);border-color:#fcd34d}
+.ji.downloaded{background:var(--green-bg);border-color:#86efac}
+.ji-body{flex:1;min-width:0}
+.ji-name{font-size:12px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ji-meta{font-size:10px;color:var(--g400)}
+.ji-ship{font-size:10px;background:var(--navy);color:#fff;padding:1px 6px;border-radius:10px;font-weight:600;flex-shrink:0}
+.empty-msg{text-align:center;padding:20px;color:var(--g400);font-size:12px}
+
+/* Block modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:300;display:flex;align-items:center;justify-content:center;padding:16px}
+.modal{background:#fff;border-radius:var(--r);padding:20px;max-width:400px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,.25)}
+.modal h3{font-size:14px;font-weight:700;color:var(--navy);margin-bottom:12px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+
+/* Manual invite */
+.manual-joiner-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:3px;margin-top:6px;border:1.5px solid var(--g200);border-radius:7px;padding:4px}
+.mji{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:5px;cursor:pointer;transition:all .12s}
+.mji:hover{background:var(--accent-lt)}
+.mji.selected{background:var(--accent-lt);border:1px solid var(--accent)}
+.mji-name{font-size:12px;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mji-meta{font-size:10px;color:var(--g400)}
+.manual-tab{display:flex;gap:0;margin-bottom:12px;border:1.5px solid var(--g200);border-radius:7px;overflow:hidden}
+.manual-tab button{flex:1;padding:7px;font-size:12px;font-weight:600;background:transparent;border:none;cursor:pointer;color:var(--g600);transition:all .13s;font-family:inherit}
+.manual-tab button.active{background:var(--navy);color:#fff}
+.divider{border:none;border-top:1.5px solid var(--g100);margin:10px 0}
+.info-bar{background:var(--accent-lt);border:1.5px solid #bfdbfe;border-radius:7px;padding:7px 11px;font-size:12px;color:var(--accent);font-weight:500;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+.warn-bar{background:var(--amber-bg);border:1.5px solid #fcd34d;border-radius:7px;padding:7px 11px;font-size:12px;color:var(--amber);font-weight:500;margin-bottom:10px}
+
+::-webkit-scrollbar{width:4px;height:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--g200);border-radius:99px}
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">
+      <span class="logo-brand">CTI<span>.</span></span>
+      <div class="logo-divider"></div>
+      <div>
+        <div class="logo-product">Assessment Scheduler <em>· Pre-Embarkation</em></div>
+        <div class="logo-sub">15-min individual slots · .ics download · No connector required</div>
+      </div>
+    </div>
+  </div>
+  <div class="hdr-pills">
+    <div class="hdr-pill" id="hdrLoaded">No file loaded</div>
+    <div class="hdr-pill" id="hdrScheduled">0 scheduled</div>
+    <div class="hdr-pill green" id="hdrDl" style="display:none">0 downloaded</div>
+  </div>
+</header>
+
+<div class="layout">
+
+<!-- ═══ SIDEBAR ═══ -->
+<div class="sidebar">
+
+  <!-- Upload -->
+  <div class="card">
+    <div class="card-title"><span class="sdot">1</span> Joiner List</div>
+    <div class="upload-zone" id="uploadZone"
+         onclick="document.getElementById('fileInput').click()"
+         ondragover="ev.preventDefault();this.classList.add('drag')"
+         ondragleave="this.classList.remove('drag')"
+         ondrop="handleDrop(event)">
+      <div class="upload-icon">📋</div>
+      <div class="upload-text" id="uploadText">
+        <strong>Click to upload</strong> or drag & drop<br>
+        <span style="font-size:11px">Excel (.xlsx) — Joiners Report</span>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" onchange="handleFileSelect(event)">
+    <div id="uploadStats" style="display:none;margin-top:8px;font-size:11px;color:var(--g600);line-height:1.6"></div>
+  </div>
+
+  <!-- Organizer -->
+  <div class="card">
+    <div class="card-title"><span class="sdot">2</span> Your Details</div>
+    <div class="fr">
+      <label>Your Name</label>
+      <input type="text" id="orgName" placeholder="e.g. Your Full Name" oninput="updateOrgBox()">
+    </div>
+    <div class="fr">
+      <label>Your Email</label>
+      <input type="email" id="orgEmail" placeholder="e.g. yourname@cti-indonesia.com" oninput="updateOrgBox()">
+    </div>
+    <div class="org-box" id="orgBox" style="display:none">
+      <div class="org-avatar" id="orgAvatar">HW</div>
+      <div>
+        <div class="org-name" id="orgNameDisp">—</div>
+        <div class="org-sub">Organizer on every invite</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Meeting Setup -->
+  <div class="card">
+    <div class="card-title"><span class="sdot">3</span> Meeting Setup</div>
+    <div class="fr">
+      <label>Subject</label>
+      <input type="text" id="subject" value="Pre-Embarkation Language Assessment — CTI Indonesia">
+    </div>
+    <div class="fr2">
+      <div><label>Daily Start</label><input type="time" id="dailyStart" value="09:00" onchange="rebuildSchedule()"></div>
+      <div><label>Daily End</label><input type="time" id="dailyEnd" value="17:00" onchange="rebuildSchedule()"></div>
+    </div>
+    <div class="fr">
+      <label>Assessment window</label>
+      <select id="windowDays" onchange="rebuildSchedule()">
+        <option value="7">Within 7 days before embark</option>
+        <option value="14">Within 14 days</option>
+        <option value="21">Within 21 days</option>
+        <option value="30" selected>Within 30 days</option>
+      </select>
+    </div>
+    <div class="fr">
+      <label>Teams Meeting Link</label>
+      <input type="url" id="teamsLink" placeholder="https://teams.microsoft.com/l/meetup-join/…" oninput="updateTeamsLinkPreview()">
+      <div style="font-size:10px;color:var(--g400);margin-top:3px">Paste your personal Teams link — embedded into every invite</div>
+    </div>
+    <div id="teamsLinkPreview" style="display:none;margin-bottom:10px">
+      <div style="background:#e8f0fe;border:1px solid #c7d7fc;border-radius:7px;padding:8px 11px;display:flex;align-items:center;gap:8px">
+        <span style="font-size:16px">🟣</span>
+        <div style="flex:1;min-width:0">
+          <div style="font-size:11px;font-weight:700;color:#1a3a6e">Teams link attached</div>
+          <div style="font-size:10px;color:var(--g400);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="teamsLinkShort"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:5px;background:#1a3a6e;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;flex-shrink:0">
+          <span>⏺</span> Auto-record ON
+        </div>
+      </div>
+    </div>
+    <div class="fr">
+      <label>Meeting body</label>
+      <textarea id="body" rows="4">You are invited to attend your Pre-Embarkation Language Assessment with CTI Indonesia. This is a required step to confirm your readiness before joining the ship. Please attend punctually and bring any relevant documents. We look forward to seeing you.</textarea>
+    </div>
+  </div>
+
+  <!-- CC -->
+  <div class="card">
+    <div class="card-title"><span class="sdot">4</span> CC Attendees</div>
+    <div style="font-size:11px;color:var(--g400);margin-bottom:7px">Added to every invite (type + Enter)</div>
+    <div class="chips" id="ccChips" onclick="document.getElementById('ccInput').focus()">
+      <input class="chip-input" id="ccInput" placeholder="email@example.com">
+    </div>
+  </div>
+
+  <!-- Block -->
+  <div class="card">
+    <div class="card-title"><span class="sdot">5</span> Block Dates / Times</div>
+    <div class="btn-row">
+      <button class="btn btn-ghost btn-sm" onclick="openBlockModal('day')">🚫 Block Day</button>
+      <button class="btn btn-ghost btn-sm" onclick="openBlockModal('range')">⏰ Block Time Range</button>
+    </div>
+    <div id="blockList" style="margin-top:9px;display:flex;flex-direction:column;gap:4px"></div>
+  </div>
+
+</div><!-- /sidebar -->
+
+<!-- ═══ MAIN ═══ -->
+<div class="main">
+
+  <!-- Download panel -->
+  <div class="dl-panel">
+    <h3>📥 Download .ics Calendar Files</h3>
+    <p>No connector or admin rights needed. Download the schedule as .ics files and open in Outlook, Teams, or any calendar app — meetings import instantly with all joiner details included.</p>
+    <div class="dl-options">
+      <div class="dl-option highlight" onclick="downloadAll()">
+        <div class="dl-icon">📦</div>
+        <div class="dl-label">Download All</div>
+        <div class="dl-sub">One .ics with all meetings</div>
+      </div>
+      <div class="dl-option" onclick="downloadByDay()">
+        <div class="dl-icon">📅</div>
+        <div class="dl-label">Download by Day</div>
+        <div class="dl-sub">Separate .ics per day</div>
+      </div>
+      <div class="dl-option" onclick="downloadSelected()">
+        <div class="dl-icon">🗓</div>
+        <div class="dl-label">Selected Day</div>
+        <div class="dl-sub" id="selectedDayLabel">Click a day first</div>
+      </div>
+      <div class="dl-option" onclick="openManualInviteModal()">
+        <div class="dl-icon">✍️</div>
+        <div class="dl-label">Manual Invite</div>
+        <div class="dl-sub">One person, any time</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- How to import -->
+  <div class="card" style="padding:0;overflow:hidden">
+    <div style="background:var(--navy);padding:16px 20px;display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleInstructions()">
+      <div style="display:flex;align-items:center;gap:10px">
+        <span style="font-size:16px">📖</span>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:#fff">How to Use This Tool</div>
+          <div style="font-size:11px;color:#94a3b8;margin-top:1px">Step-by-step guide · Click to expand</div>
+        </div>
+      </div>
+      <span id="instrToggleIcon" style="color:#94a3b8;font-size:18px;transition:transform .2s">▼</span>
+    </div>
+    <div id="instrBody" style="display:none">
+
+      <!-- Section A: Setup -->
+      <div style="padding:18px 20px;border-bottom:1px solid var(--g100)">
+        <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">Part 1 — Setup & Schedule</div>
+        <div style="display:flex;flex-direction:column;gap:0">
+
+          <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">1</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Upload your Joiners Report</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Drag and drop your <strong style="color:var(--text)">.xlsx Joiners Report</strong> onto the upload zone in the sidebar, or click to browse. The app reads the <em>PLANNED</em> sheet automatically and filters for <strong style="color:var(--text)">New Hire</strong> status only.</div>
+              <div style="margin-top:8px;background:var(--g100);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--g600);display:flex;align-items:center;gap:7px">
+                <span style="font-size:14px">💡</span> You can re-upload a new file at any time — it replaces the current list and rebuilds the schedule instantly.
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">2</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Fill in your name &amp; email</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Enter your name and work email in <strong style="color:var(--text)">Step 2 — Your Details</strong>. This appears as the <strong style="color:var(--text)">organizer</strong> on every calendar invite, so the joiner sees it coming from you personally — not a generic account.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">3</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Configure the schedule</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Set your <strong style="color:var(--text)">daily working hours</strong> (e.g. 09:00–17:00) and the <strong style="color:var(--text)">assessment window</strong> (how many days before embark the meeting should be held). The app automatically assigns each New Hire a 15-minute slot within their window, spilling over to the next day if a day is full.</div>
+              <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                <div style="background:var(--accent-lt);border:1px solid #bfdbfe;border-radius:6px;padding:6px 10px;font-size:11px;color:var(--accent);font-weight:600">⏱ 15-min slots</div>
+                <div style="background:var(--accent-lt);border:1px solid #bfdbfe;border-radius:6px;padding:6px 10px;font-size:11px;color:var(--accent);font-weight:600">📅 Auto-continues next day</div>
+                <div style="background:var(--accent-lt);border:1px solid #bfdbfe;border-radius:6px;padding:6px 10px;font-size:11px;color:var(--accent);font-weight:600">📋 ≤30 days before embark</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;padding:12px 0">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">4</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Block dates or time ranges (optional)</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Use <strong style="color:var(--text)">Block Day</strong> to skip a full day (public holiday, weekend, unavailability), or <strong style="color:var(--text)">Block Time Range</strong> to exclude a window within a day (e.g. 12:00–13:00 for lunch). Blocked slots are automatically skipped and the affected meetings move to the next available slot.</div>
+              <div style="margin-top:8px;background:var(--red-bg);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--red);display:flex;align-items:center;gap:7px">
+                <span>🚫</span> You can also block a day directly by clicking it on the calendar, then clicking <strong>Block Day</strong> in the day panel.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Section B: Download & Import -->
+      <div style="padding:18px 20px;border-bottom:1px solid var(--g100)">
+        <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">Part 2 — Download &amp; Import into Outlook</div>
+
+        <div style="display:flex;flex-direction:column;gap:0">
+
+          <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">1</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Download the .ics file</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Click <strong style="color:var(--text)">📦 Download All</strong> to get one file containing every meeting. Or use <strong style="color:var(--text)">Download by Day</strong> to get separate files per day — useful if different staff handle different days.</div>
+              <div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 11px;font-size:11px;color:var(--green)">
+                <strong>Tip:</strong> Click any day on the calendar first, then use <strong>Selected Day</strong> to download just that day's meetings.
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">2</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Open the file in Outlook</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6"><strong style="color:var(--text)">Double-click</strong> the downloaded <code style="background:var(--g100);padding:1px 5px;border-radius:4px;font-size:11px">.ics</code> file. Outlook opens automatically and shows a preview of the import.</div>
+              <div style="margin-top:8px;background:var(--g100);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--g600)">
+                📌 Works with <strong>Outlook 2016, 2019, 2021, Microsoft 365 Outlook</strong>, and Outlook on the web (drag .ics into calendar).
+              </div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">3</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Click "Import" in Outlook</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">In the Outlook import dialog, click <strong style="color:var(--text)">Import</strong>. All meetings are added to your calendar instantly — each joiner receives their individual invite with the assessment details, date, and time.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;padding:12px 0">
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:circle;flex-shrink:0;margin-top:2px">4</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Outlook sends the invites from your account</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Once imported, Outlook sends the meeting request <strong style="color:var(--text)">from your email address</strong> to each joiner. They receive a standard calendar invite they can accept, decline, or add to their own calendar. A <strong style="color:var(--text)">Teams link</strong> is auto-generated if your Outlook is connected to Teams.</div>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--g100)">
+            <div style="font-size:20px;margin-top:2px">🟣</div>
+            <div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">How to get your Teams meeting link</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6;margin-bottom:8px">To embed a Teams link into every invite (with auto-record), paste your personal meeting link into the <strong style="color:var(--text)">Teams Meeting Link</strong> field in Step 3.</div>
+              <div style="display:flex;flex-direction:column;gap:6px">
+                <div style="background:var(--g100);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--g600);display:flex;gap:8px"><span style="font-weight:700;color:var(--text);flex-shrink:0">Option A</span> Open <strong>Teams</strong> → Click <strong>Calendar</strong> → <strong>New Meeting</strong> → copy the Join link from the invite. Use this link for all invites.</div>
+                <div style="background:var(--g100);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--g600);display:flex;gap:8px"><span style="font-weight:700;color:var(--text);flex-shrink:0">Option B</span> In Teams → go to your <strong>Profile</strong> → <strong>Meet Now</strong> → <strong>Get a link to share</strong> — copy that link. It's a permanent meeting room link tied to your account.</div>
+              </div>
+              <div style="margin-top:8px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:7px 11px;font-size:11px;color:var(--amber)">
+                ⚠️ <strong>Auto-record note:</strong> The <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">X-MS-OLK-AUTORECORD:TRUE</code> flag is written into every .ics. Outlook passes this to Teams which starts recording automatically when the meeting begins. This requires your Teams policy to allow recording — check with your IT admin if it doesn't trigger.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Section C: Manual invite -->
+      <div style="padding:18px 20px;border-bottom:1px solid var(--g100)">
+        <div style="font-size:11px;font-weight:700;color:var(--amber);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">Part 3 — Manual Invites</div>
+        <div style="display:flex;gap:14px;padding:4px 0">
+          <div style="font-size:20px;margin-top:2px">✍️</div>
+          <div>
+            <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">For individual or ad-hoc assessments</div>
+            <div style="font-size:12px;color:var(--g400);line-height:1.6;margin-bottom:8px">Use <strong style="color:var(--text)">✍️ Manual Invite</strong> to create a single assessment for anyone — whether they're in the joiner list or not. Two options:</div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <div style="background:var(--g100);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--g600)">
+                <strong style="color:var(--text)">Pick from Joiner List</strong> — search and select any New Hire from the uploaded file, set a custom date and time, download their individual .ics.
+              </div>
+              <div style="background:var(--g100);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--g600)">
+                <strong style="color:var(--text)">Enter Manually</strong> — type any name, email, position and ship. Useful for re-assessments, walk-ins, or candidates not in the current file.
+              </div>
+            </div>
+            <div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 11px;font-size:11px;color:var(--green)">
+              You can also click <strong>📥 .ics</strong> on any individual slot row in the day panel to download just that one meeting.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section D: FAQ -->
+      <div style="padding:18px 20px">
+        <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Quick FAQ</div>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div style="font-size:12px"><strong style="color:var(--text)">Does this need any connectors or admin access?</strong><br><span style="color:var(--g400)">No. The app runs entirely in your browser. The .ics format is a universal standard — no Microsoft 365 connector, no permissions, no installation required.</span></div>
+          <div style="font-size:12px"><strong style="color:var(--text)">Can multiple staff use the same file?</strong><br><span style="color:var(--g400)">Yes. Each person opens the app, enters their own name and email in Step 2, and downloads their own .ics. The organizer on each invite will be whoever fills in their details.</span></div>
+          <div style="font-size:12px"><strong style="color:var(--text)">What if a joiner doesn't have an email in the file?</strong><br><span style="color:var(--g400)">They appear flagged in amber in the joiner list. Use Manual Invite → Enter Manually to create their invite once you have their email.</span></div>
+          <div style="font-size:12px"><strong style="color:var(--text)">What if too many joiners can't fit in the time window?</strong><br><span style="color:var(--g400)">The app continues to the next available day automatically. Check the calendar — meetings will spread across multiple days. Extend the window or adjust working hours if needed.</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Calendar -->
+  <div class="card">
+    <div class="cal-nav">
+      <button class="btn btn-ghost btn-sm" onclick="changeMonth(-1)">← Prev</button>
+      <h3 id="calTitle"></h3>
+      <button class="btn btn-ghost btn-sm" onclick="changeMonth(1)">Next →</button>
+    </div>
+    <div class="cal-grid" id="calGrid">
+      <div class="cal-dow">Sun</div><div class="cal-dow">Mon</div><div class="cal-dow">Tue</div>
+      <div class="cal-dow">Wed</div><div class="cal-dow">Thu</div><div class="cal-dow">Fri</div>
+      <div class="cal-dow">Sat</div>
+    </div>
+  </div>
+
+  <!-- Day panel -->
+  <div id="dayPanelWrap" style="display:none"></div>
+
+  <!-- Joiner list -->
+  <div class="card">
+    <div class="card-title">
+      👥 Joiner List
+      <span id="joinerBadge" style="background:var(--accent);color:#fff;font-size:10px;font-weight:700;padding:1px 7px;border-radius:10px;margin-left:4px">0</span>
+      <span style="margin-left:auto;font-size:10px;color:var(--g400);font-weight:400;text-transform:none;letter-spacing:0">Scheduled ≤ window before embark date</span>
+    </div>
+    <div class="joiner-search">
+      <input type="text" id="searchInput" placeholder="🔍 Search name, position, ship…" oninput="renderJoinerList()">
+      <select id="shipFilter" onchange="renderJoinerList()"><option value="">All Ships</option></select>
+      <select id="deptFilter" onchange="renderJoinerList()"><option value="">All Depts</option></select>
+    </div>
+    <div id="noDataMsg" class="empty-msg">📂 Upload a Joiners Report Excel file to get started</div>
+    <div class="joiner-list" id="joinerList" style="display:none"></div>
+  </div>
+
+</div><!-- /main -->
+</div><!-- /layout -->
+
+<!-- Block Modal -->
+<div class="modal-overlay" id="blockModal" style="display:none" onclick="if(event.target===this)closeBlockModal()">
+  <div class="modal">
+    <h3 id="blockModalTitle"></h3>
+    <div id="blockModalBody"></div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeBlockModal()">Cancel</button>
+      <button class="btn btn-danger btn-sm" onclick="confirmBlock()">Block</button>
+    </div>
+  </div>
+</div>
+
+<!-- Manual Invite Modal -->
+<div class="modal-overlay" id="manualModal" style="display:none" onclick="if(event.target===this)closeManualModal()">
+  <div class="modal" style="max-width:460px">
+    <h3>✍️ Manual Invite</h3>
+    <div class="manual-tab">
+      <button id="tabSearch" class="active" onclick="switchManualTab('search')">Pick from Joiner List</button>
+      <button id="tabCustom" onclick="switchManualTab('custom')">Enter Manually</button>
+    </div>
+
+    <!-- Search tab -->
+    <div id="manualSearchTab">
+      <input type="text" id="manualSearch" placeholder="🔍 Search name, E-number, ship…" oninput="renderManualJoinerList()" style="margin-bottom:6px">
+      <div class="manual-joiner-list" id="manualJoinerList"></div>
+      <div id="manualSelectedInfo" style="display:none;margin-top:8px;padding:8px 10px;background:var(--accent-lt);border-radius:7px;font-size:12px">
+        <strong id="manualSelName"></strong><br>
+        <span id="manualSelMeta" style="color:var(--g400)"></span>
+      </div>
+    </div>
+
+    <!-- Custom tab -->
+    <div id="manualCustomTab" style="display:none">
+      <div class="fr">
+        <label>Full Name</label>
+        <input type="text" id="manualName" placeholder="e.g. John Smith">
+      </div>
+      <div class="fr">
+        <label>Email</label>
+        <input type="email" id="manualEmail" placeholder="e.g. john@gmail.com">
+      </div>
+      <div class="fr">
+        <label>Position (optional)</label>
+        <input type="text" id="manualPosition" placeholder="e.g. Dining Steward">
+      </div>
+      <div class="fr">
+        <label>Ship (optional)</label>
+        <input type="text" id="manualShip" placeholder="e.g. Queen Anne">
+      </div>
+    </div>
+
+    <div class="divider"></div>
+    <div class="fr2">
+      <div>
+        <label>Date</label>
+        <input type="date" id="manualDate">
+      </div>
+      <div>
+        <label>Time</label>
+        <input type="time" id="manualTime" value="09:00">
+      </div>
+    </div>
+
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" onclick="closeManualModal()">Cancel</button>
+      <button class="btn btn-success btn-sm" onclick="confirmManualInvite()">📥 Download .ics</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script>
+// ── STATE ─────────────────────────────────────────────────────────────────────
+let joiners = [];
+let schedule = {};        // { 'YYYY-MM-DD': [{time, joiner}] }
+let blocks = [];          // [{type:'day'|'range', date, startTime?, endTime?, label}]
+let selectedDay = null;
+let downloadedDays = new Set();
+let calYear, calMonth;
+let ccEmails = [];
+let blockModalMode = 'day';
+
+const today = new Date();
+calYear = today.getFullYear();
+calMonth = today.getMonth();
+const todayStr = today.toISOString().split('T')[0];
+
+// ── ORGANIZER ─────────────────────────────────────────────────────────────────
+function updateOrgBox() {
+  const name = document.getElementById('orgName').value.trim();
+  const email = document.getElementById('orgEmail').value.trim();
+  const box = document.getElementById('orgBox');
+  if (name || email) {
+    box.style.display = 'flex';
+    const initials = name.split(' ').filter(Boolean).map(w=>w[0]).slice(0,2).join('').toUpperCase() || '?';
+    document.getElementById('orgAvatar').textContent = initials;
+    document.getElementById('orgNameDisp').textContent = name || email;
+  } else {
+    box.style.display = 'none';
+  }
+}
+
+function updateTeamsLinkPreview() {
+  const link = document.getElementById('teamsLink').value.trim();
+  const preview = document.getElementById('teamsLinkPreview');
+  const short = document.getElementById('teamsLinkShort');
+  if (link && link.startsWith('http')) {
+    preview.style.display = '';
+    // Show a truncated version of the URL
+    try {
+      const url = new URL(link);
+      short.textContent = url.hostname + url.pathname.slice(0, 40) + (url.pathname.length > 40 ? '…' : '');
+    } catch {
+      short.textContent = link.slice(0, 60) + (link.length > 60 ? '…' : '');
+    }
+  } else {
+    preview.style.display = 'none';
+  }
+}
+
+// ── FILE UPLOAD ────────────────────────────────────────────────────────────────
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('uploadZone').classList.remove('drag');
+  const file = e.dataTransfer.files[0];
+  if (file) processFile(file);
+}
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) processFile(file);
+  e.target.value = '';
+}
+
+function processFile(file) {
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const wb = XLSX.read(e.target.result, { type: 'binary', cellDates: true });
+      const sheetName = wb.SheetNames.find(n => n.toUpperCase().includes('PLANNED')) || wb.SheetNames[0];
+      const ws = wb.Sheets[sheetName];
+      const rows = XLSX.utils.sheet_to_json(ws, { raw: false, dateNF: 'yyyy-mm-dd' });
+
+      joiners = rows
+        .filter(r => (r['Employment Status'] || '').trim() === 'New Hire')
+        .map(r => {
+          const embarkRaw = r['Embark Date'] || '';
+          let embark_date = '';
+          if (embarkRaw) {
+            const d = new Date(embarkRaw);
+            embark_date = !isNaN(d) ? d.toISOString().split('T')[0] : embarkRaw.slice(0, 10);
+          }
+          return {
+            e_number: String(r['E-Number Code'] || '').trim(),
+            name: ((r['Name'] || '') + ' ' + (r['Surname'] || '')).trim(),
+            email: String(r['Email'] || '').trim(),
+            position: String(r['Role Position'] || '').trim(),
+            department: String(r['Department'] || '').trim(),
+            ship: String(r['Ship'] || '').trim(),
+            embark_date,
+            embark_port: String(r['Embark Port'] || '').trim(),
+            cti_office: String(r['CTI Office'] || '').trim(),
+            status: String(r['Status'] || '').trim(),
+          };
+        })
+        .filter(j => j.name.trim() && j.embark_date);
+
+      // Populate filters
+      const ships = [...new Set(joiners.map(j => j.ship).filter(Boolean))].sort();
+      const depts = [...new Set(joiners.map(j => j.department).filter(Boolean))].sort();
+      const ss = document.getElementById('shipFilter');
+      const ds = document.getElementById('deptFilter');
+      ss.innerHTML = '<option value="">All Ships</option>';
+      ds.innerHTML = '<option value="">All Depts</option>';
+      ships.forEach(s => { const o = document.createElement('option'); o.value = s; o.textContent = s; ss.appendChild(o); });
+      depts.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; ds.appendChild(o); });
+
+      const embarkDates = joiners.map(j => j.embark_date).filter(Boolean).sort();
+      document.getElementById('uploadZone').classList.add('loaded');
+      document.getElementById('uploadText').innerHTML = `✅ <strong>${file.name}</strong><br><span style="font-size:11px;color:var(--green)">${joiners.length} new hires loaded</span>`;
+      document.getElementById('uploadStats').style.display = 'block';
+      document.getElementById('uploadStats').innerHTML = `<strong>${joiners.length}</strong> New Hires · <strong>${ships.length}</strong> ships<br>Embarks: ${embarkDates[0]} → ${embarkDates.slice(-1)[0]}`;
+      document.getElementById('hdrLoaded').textContent = joiners.length + ' New Hires';
+      document.getElementById('noDataMsg').style.display = 'none';
+      document.getElementById('joinerList').style.display = 'flex';
+      downloadedDays = new Set();
+      rebuildSchedule();
+      renderJoinerList();
+      // Nav to first scheduled month
+      const firstDate = Object.keys(schedule).sort()[0];
+      if (firstDate) {
+        const [y, mo] = firstDate.split('-').map(Number);
+        calYear = y; calMonth = mo - 1;
+      }
+      renderCalendar();
+    } catch(err) {
+      alert('Could not read file: ' + err.message);
+    }
+  };
+  reader.readAsBinaryString(file);
+}
+
+// ── SCHEDULE BUILDER ──────────────────────────────────────────────────────────
+function rebuildSchedule() {
+  if (!joiners.length) { renderCalendar(); return; }
+  schedule = {};
+  const windowDays = parseInt(document.getElementById('windowDays').value);
+  const dailyStart = document.getElementById('dailyStart').value;
+  const dailyEnd = document.getElementById('dailyEnd').value;
+
+  const sorted = [...joiners]
+    .filter(j => j.email && j.embark_date)
+    .sort((a, b) => a.embark_date.localeCompare(b.embark_date));
+
+  function isDayBlocked(dateStr) {
+    return blocks.some(b => b.type === 'day' && b.date === dateStr);
+  }
+  function isTimeBlocked(dateStr, time) {
+    return blocks.some(b => {
+      if (b.type === 'day' && b.date === dateStr) return true;
+      if (b.type === 'range' && b.date === dateStr) return time >= b.startTime && time < b.endTime;
+      return false;
+    });
+  }
+  function getSlotsForDay(dateStr) {
+    const [sh, sm] = dailyStart.split(':').map(Number);
+    const [eh, em] = dailyEnd.split(':').map(Number);
+    const total = Math.floor(((eh * 60 + em) - (sh * 60 + sm)) / 15);
+    const slots = [];
+    for (let i = 0; i < total; i++) {
+      const mins = sh * 60 + sm + i * 15;
+      const h = String(Math.floor(mins / 60)).padStart(2, '0');
+      const m = String(mins % 60).padStart(2, '0');
+      const t = `${h}:${m}`;
+      if (!isTimeBlocked(dateStr, t)) slots.push(t);
+    }
+    return slots;
+  }
+
+  const usedSlots = {};
+  sorted.forEach(joiner => {
+    const embark = new Date(joiner.embark_date + 'T12:00:00');
+    const winStart = new Date(embark); winStart.setDate(winStart.getDate() - windowDays);
+    const winEnd = new Date(embark); winEnd.setDate(winEnd.getDate() - 1);
+    let assigned = false;
+    const cursor = new Date(winStart);
+    while (cursor <= winEnd && !assigned) {
+      const ds = cursor.toISOString().split('T')[0];
+      if (!isDayBlocked(ds)) {
+        if (!usedSlots[ds]) usedSlots[ds] = new Set();
+        for (const t of getSlotsForDay(ds)) {
+          if (!usedSlots[ds].has(t)) {
+            usedSlots[ds].add(t);
+            if (!schedule[ds]) schedule[ds] = [];
+            schedule[ds].push({ time: t, joiner });
+            assigned = true;
+            break;
+          }
+        }
+      }
+      if (!assigned) cursor.setDate(cursor.getDate() + 1);
+    }
+  });
+
+  Object.keys(schedule).forEach(d => schedule[d].sort((a, b) => a.time.localeCompare(b.time)));
+
+  const total = Object.values(schedule).reduce((s, sl) => s + sl.length, 0);
+  document.getElementById('hdrScheduled').textContent = total + ' scheduled';
+  renderCalendar();
+  if (selectedDay) renderDayPanel(selectedDay);
+  renderJoinerList();
+}
+
+// ── CALENDAR ──────────────────────────────────────────────────────────────────
+function changeMonth(dir) {
+  calMonth += dir;
+  if (calMonth > 11) { calMonth = 0; calYear++; }
+  if (calMonth < 0) { calMonth = 11; calYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calTitle').textContent = `${months[calMonth]} ${calYear}`;
+  const grid = document.getElementById('calGrid');
+  while (grid.children.length > 7) grid.removeChild(grid.lastChild);
+
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const prevDays = new Date(calYear, calMonth, 0).getDate();
+
+  for (let i = 0; i < firstDay; i++) {
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.innerHTML = `<div class="day-num">${prevDays - firstDay + 1 + i}</div>`;
+    grid.appendChild(d);
+  }
+
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    const isBlocked = blocks.some(b => b.type === 'day' && b.date === ds);
+    const hasMeetings = schedule[ds] && schedule[ds].length > 0;
+    const isDl = downloadedDays.has(ds);
+    const isToday = ds === todayStr;
+    const isSel = ds === selectedDay;
+
+    const d = document.createElement('div');
+    d.className = 'cal-day'
+      + (isBlocked ? ' blocked' : '')
+      + (!isBlocked && hasMeetings && isDl ? ' downloaded' : '')
+      + (!isBlocked && hasMeetings && !isDl ? ' has-meetings' : '')
+      + (isToday ? ' today' : '')
+      + (isSel ? ' selected-day' : '');
+
+    let inner = `<div class="day-num">${day}</div>`;
+    if (isBlocked) inner += `<div class="day-info day-blocked">🚫 Blocked</div>`;
+    else if (hasMeetings) {
+      inner += `<div class="day-info ${isDl ? 'day-dl' : 'day-mtg'}">${schedule[ds].length} mtg${isDl ? ' ✓' : ''}</div>`;
+      inner += `<div class="day-dots">${schedule[ds].slice(0,8).map(() => `<div class="dot${isDl?' dl':''}"></div>`).join('')}</div>`;
+    }
+    d.innerHTML = inner;
+    d.onclick = () => {
+      selectedDay = ds;
+      document.getElementById('selectedDayLabel').textContent = ds;
+      renderCalendar();
+      renderDayPanel(ds);
+      document.getElementById('dayPanelWrap').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    };
+    grid.appendChild(d);
+  }
+
+  const total = firstDay + daysInMonth;
+  const rem = (7 - total % 7) % 7;
+  for (let i = 1; i <= rem; i++) {
+    const d = document.createElement('div');
+    d.className = 'cal-day other-month';
+    d.innerHTML = `<div class="day-num">${i}</div>`;
+    grid.appendChild(d);
+  }
+}
+
+// ── DAY PANEL ─────────────────────────────────────────────────────────────────
+function renderDayPanel(ds) {
+  const wrap = document.getElementById('dayPanelWrap');
+  wrap.style.display = '';
+  const slots = schedule[ds] || [];
+  const isBlocked = blocks.some(b => b.type === 'day' && b.date === ds);
+  const isDl = downloadedDays.has(ds);
+  const d = new Date(ds + 'T12:00:00');
+  const label = d.toLocaleDateString('en-GB', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+  const rangeBlocks = blocks.filter(b => b.type === 'range' && b.date === ds);
+
+  let html = `<div class="day-panel"><div class="dp-title"><span>📅 ${label}</span><div class="dp-actions">`;
+  if (isBlocked) html += `<button class="btn btn-ghost btn-sm" onclick="unblockDay('${ds}')">✅ Unblock</button>`;
+  else {
+    html += `<button class="btn btn-danger btn-sm" onclick="blockDay('${ds}')">🚫 Block Day</button>`;
+    html += `<button class="btn btn-ghost btn-sm" onclick="openBlockModalForDate('${ds}')">⏰ Block Time</button>`;
+    if (slots.length) html += `<button class="btn btn-success btn-sm" onclick="downloadDay('${ds}')">📥 Download Day</button>`;
+  }
+  html += `</div></div>`;
+
+  if (isBlocked) {
+    html += `<div class="warn-bar">🚫 This day is fully blocked — no meetings scheduled.</div>`;
+  } else if (!slots.length) {
+    html += `<div class="empty-msg" style="padding:10px">No meetings on this day.</div>`;
+  } else {
+    html += `<div style="font-size:11px;color:var(--g400);margin-bottom:9px">${slots.length} meetings · ${isDl ? '<span style="color:var(--green);font-weight:600">✓ Downloaded</span>' : 'Not yet downloaded'}</div>`;
+    html += `<div class="slot-grid">`;
+    slots.forEach((sl, idx) => {
+      const dl = downloadedDays.has(ds);
+      html += `<div class="slot-row ${dl ? 'downloaded' : 'filled'}">
+        <div class="slot-time">${sl.time}</div>
+        <div class="slot-info">
+          <div class="slot-name">${sl.joiner.name}</div>
+          <div class="slot-sub">${sl.joiner.position} · ${sl.joiner.ship} · Embark ${sl.joiner.embark_date}</div>
+          <div class="slot-sub">${sl.joiner.email}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0">
+          <span class="slot-badge ${dl ? 'badge-dl' : 'badge-ready'}">${dl ? '✓ Ready' : 'Pending'}</span>
+          <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:10px;white-space:nowrap" onclick="downloadSingleSlot('${ds}',${idx})">📥 .ics</button>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (rangeBlocks.length) {
+    html += `<div class="divider"></div><div style="font-size:10px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px">Blocked time ranges</div>`;
+    rangeBlocks.forEach(b => {
+      const idx = blocks.indexOf(b);
+      html += `<div style="display:flex;align-items:center;gap:8px;padding:5px 8px;background:var(--red-bg);border-radius:6px;margin-bottom:3px;font-size:11px">
+        <span style="color:var(--red);font-weight:600;flex:1">⏰ ${b.startTime}–${b.endTime} ${b.label ? '· ' + b.label : ''}</span>
+        <button class="btn btn-ghost btn-sm" style="padding:2px 7px;font-size:10px" onclick="removeBlock(${idx})">Remove</button>
+      </div>`;
+    });
+  }
+
+  html += `</div>`;
+  wrap.innerHTML = html;
+}
+
+// ── ICS GENERATION ────────────────────────────────────────────────────────────
+function icsTimestamp(dateStr, timeStr) {
+  // Returns UTC-ish timestamp — use local time format for floating events
+  const [y, mo, d] = dateStr.split('-');
+  const [h, m] = timeStr.split(':');
+  return `${y}${mo}${d}T${h}${m}00`;
+}
+
+function escapeIcs(str) {
+  return (str || '').replace(/\\/g, '\\\\').replace(/;/g, '\\;').replace(/,/g, '\\,').replace(/\n/g, '\\n');
+}
+
+function wrapIcsLine(line) {
+  // RFC 5545: fold lines > 75 octets
+  const bytes = unescape(encodeURIComponent(line));
+  if (bytes.length <= 75) return line;
+  let result = '';
+  let current = '';
+  for (const char of line) {
+    if ((current + char).length > 75) {
+      result += current + '\r\n ';
+      current = char;
+    } else {
+      current += char;
+    }
+  }
+  return result + current;
+}
+
+function buildIcsEvent(dateStr, slot) {
+  const subject = document.getElementById('subject').value.trim() || 'Pre-Embarkation Language Assessment';
+  const body = document.getElementById('body').value.trim();
+  const orgName = document.getElementById('orgName').value.trim();
+  const orgEmail = document.getElementById('orgEmail').value.trim();
+  const teamsLink = document.getElementById('teamsLink').value.trim();
+  const joiner = slot.joiner;
+
+  const startTs = icsTimestamp(dateStr, slot.time);
+  const [h, m] = slot.time.split(':').map(Number);
+  const endMins = h * 60 + m + 15;
+  const endTime = `${String(Math.floor(endMins/60)).padStart(2,'0')}:${String(endMins%60).padStart(2,'0')}`;
+  const endTs = icsTimestamp(dateStr, endTime);
+
+  const uid = `CTI-ASSESS-${joiner.e_number}-${dateStr.replace(/-/g,'')}@cti-indonesia.com`;
+  const now = new Date().toISOString().replace(/[-:]/g,'').split('.')[0] + 'Z';
+
+  // Teams join section appended to body
+  const teamsSection = teamsLink
+    ? `\n\n________________\nJoin Microsoft Teams Meeting\n${teamsLink}\n\nNote: This meeting will be recorded.\n________________`
+    : '';
+
+  const fullBody = `${body}${teamsSection}\n\nAssessment Details:\nCandidate: ${joiner.name}\nPosition: ${joiner.position}\nShip: ${joiner.ship}\nEmbarkation: ${joiner.embark_date} from ${joiner.embark_port}\nE-Number: ${joiner.e_number}`;
+
+  let attendees = `ATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;RSVP=TRUE;CN=${escapeIcs(joiner.name)}:mailto:${joiner.email}`;
+  ccEmails.forEach(cc => {
+    attendees += `\r\nATTENDEE;CUTYPE=INDIVIDUAL;ROLE=REQ-PARTICIPANT;RSVP=FALSE:mailto:${cc}`;
+  });
+
+  const organizerLine = orgEmail
+    ? `ORGANIZER;CN=${escapeIcs(orgName || orgEmail)}:mailto:${orgEmail}`
+    : `ORGANIZER:mailto:noreply@cti-indonesia.com`;
+
+  const locationLine = teamsLink ? `LOCATION:Microsoft Teams Meeting` : `LOCATION:Online`;
+
+  const lines = [
+    'BEGIN:VEVENT',
+    `UID:${uid}`,
+    `DTSTAMP:${now}`,
+    `DTSTART:${startTs}`,
+    `DTEND:${endTs}`,
+    wrapIcsLine(`SUMMARY:${escapeIcs(subject)} — ${escapeIcs(joiner.name)}`),
+    wrapIcsLine(`DESCRIPTION:${escapeIcs(fullBody)}`),
+    locationLine,
+    organizerLine,
+    attendees,
+    'STATUS:CONFIRMED',
+    'TRANSP:OPAQUE',
+  ];
+
+  if (teamsLink) {
+    // Makes Outlook render the purple "Join Microsoft Teams Meeting" button
+    lines.push(wrapIcsLine(`X-MICROSOFT-SKYPETEAMSMEETINGURL:${teamsLink}`));
+    lines.push(wrapIcsLine(`X-MICROSOFT-ONLINEMEETINGCONFLINK:${teamsLink}`));
+    // Auto-record flag recognised by Teams/Outlook
+    lines.push('X-MS-OLK-AUTORECORD:TRUE');
+  }
+
+  lines.push('END:VEVENT');
+  return lines.join('\r\n');
+}
+
+function buildIcsFile(events) {
+  const orgName = document.getElementById('orgName').value.trim() || 'CTI Indonesia';
+  return [
+    'BEGIN:VCALENDAR',
+    'VERSION:2.0',
+    `PRODID:-//CTI Indonesia//Pre-Embarkation Scheduler//EN`,
+    `X-WR-CALNAME:${escapeIcs(orgName)} — Pre-Embarkation Assessments`,
+    'X-WR-TIMEZONE:Asia/Makassar',
+    'CALSCALE:GREGORIAN',
+    'METHOD:REQUEST',
+    ...events,
+    'END:VCALENDAR'
+  ].join('\r\n');
+}
+
+function triggerDownload(content, filename) {
+  const blob = new Blob([content], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function downloadAll() {
+  const allDates = Object.keys(schedule).sort();
+  if (!allDates.length) { alert('No meetings scheduled yet. Upload a Joiners Report first.'); return; }
+  const events = [];
+  allDates.forEach(ds => {
+    schedule[ds].forEach(slot => events.push(buildIcsEvent(ds, slot)));
+  });
+  const ics = buildIcsFile(events);
+  const orgName = document.getElementById('orgName').value.trim().replace(/\s+/g,'_') || 'CTI';
+  triggerDownload(ics, `${orgName}_All_Assessments.ics`);
+  allDates.forEach(ds => downloadedDays.add(ds));
+  document.getElementById('hdrDl').style.display = '';
+  document.getElementById('hdrDl').textContent = downloadedDays.size + ' days downloaded';
+  renderCalendar();
+  if (selectedDay) renderDayPanel(selectedDay);
+}
+
+function downloadByDay() {
+  const allDates = Object.keys(schedule).sort();
+  if (!allDates.length) { alert('No meetings scheduled yet.'); return; }
+  const orgName = document.getElementById('orgName').value.trim().replace(/\s+/g,'_') || 'CTI';
+  allDates.forEach(ds => {
+    const events = schedule[ds].map(slot => buildIcsEvent(ds, slot));
+    const ics = buildIcsFile(events);
+    triggerDownload(ics, `${orgName}_Assessments_${ds}.ics`);
+    downloadedDays.add(ds);
+  });
+  document.getElementById('hdrDl').style.display = '';
+  document.getElementById('hdrDl').textContent = downloadedDays.size + ' days downloaded';
+  renderCalendar();
+}
+
+function downloadDay(ds) {
+  const slots = schedule[ds];
+  if (!slots || !slots.length) { alert('No meetings on this day.'); return; }
+  const events = slots.map(slot => buildIcsEvent(ds, slot));
+  const ics = buildIcsFile(events);
+  const orgName = document.getElementById('orgName').value.trim().replace(/\s+/g,'_') || 'CTI';
+  triggerDownload(ics, `${orgName}_Assessments_${ds}.ics`);
+  downloadedDays.add(ds);
+  document.getElementById('hdrDl').style.display = '';
+  document.getElementById('hdrDl').textContent = downloadedDays.size + ' days downloaded';
+  renderCalendar();
+  renderDayPanel(ds);
+}
+
+function downloadSelected() {
+  if (!selectedDay) { alert('Click a day on the calendar first.'); return; }
+  downloadDay(selectedDay);
+}
+
+function downloadUnscheduled() {
+  const scheduled = new Set(Object.values(schedule).flat().map(s => s.joiner.e_number));
+  const unscheduled = joiners.filter(j => !scheduled.has(j.e_number) && j.email);
+  if (!unscheduled.length) { alert('All joiners with emails are scheduled.'); return; }
+  alert(`${unscheduled.length} joiner(s) could not be scheduled within the assessment window. Consider extending the window or checking their embark dates.`);
+}
+
+// ── BLOCKS ────────────────────────────────────────────────────────────────────
+function blockDay(ds) {
+  if (!blocks.some(b => b.type === 'day' && b.date === ds)) {
+    blocks.push({ type: 'day', date: ds, label: 'Blocked' });
+    rebuildSchedule(); renderBlockList();
+  }
+}
+function unblockDay(ds) {
+  blocks = blocks.filter(b => !(b.type === 'day' && b.date === ds));
+  rebuildSchedule(); renderBlockList();
+  renderDayPanel(ds);
+}
+function removeBlock(idx) {
+  blocks.splice(idx, 1);
+  rebuildSchedule(); renderBlockList();
+  if (selectedDay) renderDayPanel(selectedDay);
+}
+function renderBlockList() {
+  const list = document.getElementById('blockList');
+  if (!blocks.length) { list.innerHTML = ''; return; }
+  list.innerHTML = blocks.map((b, i) => `
+    <div style="display:flex;align-items:center;gap:6px;font-size:11px;padding:4px 7px;background:var(--red-bg);border-radius:5px">
+      <span style="flex:1;color:var(--red);font-weight:600">${b.type==='day'?'🚫':' ⏰'} ${b.date}${b.type==='range'?' '+b.startTime+'–'+b.endTime:''} ${b.label?'· '+b.label:''}</span>
+      <button class="btn btn-ghost btn-sm" style="padding:2px 6px;font-size:10px" onclick="removeBlock(${i})">✕</button>
+    </div>`).join('');
+}
+
+function openBlockModal(mode) {
+  blockModalMode = mode;
+  document.getElementById('blockModalTitle').textContent = mode === 'day' ? '🚫 Block a Day' : '⏰ Block Time Range';
+  const body = document.getElementById('blockModalBody');
+  if (mode === 'day') {
+    body.innerHTML = `
+      <div class="fr"><label>Date</label><input type="date" id="bDate" value="${selectedDay || todayStr}"></div>
+      <div class="fr"><label>Reason (optional)</label><input type="text" id="bLabel" placeholder="e.g. Public Holiday"></div>`;
+  } else {
+    body.innerHTML = `
+      <div class="fr"><label>Date</label><input type="date" id="bDate" value="${selectedDay || todayStr}"></div>
+      <div class="fr2">
+        <div><label>From</label><input type="time" id="bStart" value="12:00"></div>
+        <div><label>To</label><input type="time" id="bEnd" value="13:00"></div>
+      </div>
+      <div class="fr"><label>Reason (optional)</label><input type="text" id="bLabel" placeholder="e.g. Lunch break"></div>`;
+  }
+  document.getElementById('blockModal').style.display = 'flex';
+}
+function openBlockModalForDate(ds) {
+  blockModalMode = 'range';
+  document.getElementById('blockModalTitle').textContent = '⏰ Block Time Range';
+  document.getElementById('blockModalBody').innerHTML = `
+    <div class="fr"><label>Date</label><input type="date" id="bDate" value="${ds}"></div>
+    <div class="fr2">
+      <div><label>From</label><input type="time" id="bStart" value="12:00"></div>
+      <div><label>To</label><input type="time" id="bEnd" value="13:00"></div>
+    </div>
+    <div class="fr"><label>Reason (optional)</label><input type="text" id="bLabel" placeholder="e.g. Lunch break"></div>`;
+  document.getElementById('blockModal').style.display = 'flex';
+}
+function closeBlockModal() { document.getElementById('blockModal').style.display = 'none'; }
+function confirmBlock() {
+  const date = document.getElementById('bDate').value;
+  const label = document.getElementById('bLabel')?.value || '';
+  if (!date) return;
+  if (blockModalMode === 'day') {
+    if (!blocks.some(b => b.type === 'day' && b.date === date))
+      blocks.push({ type: 'day', date, label });
+  } else {
+    const startTime = document.getElementById('bStart').value;
+    const endTime = document.getElementById('bEnd').value;
+    if (!startTime || !endTime || startTime >= endTime) { alert('Invalid time range'); return; }
+    blocks.push({ type: 'range', date, startTime, endTime, label });
+  }
+  closeBlockModal();
+  rebuildSchedule(); renderBlockList();
+  if (selectedDay) renderDayPanel(selectedDay);
+}
+
+// ── CC CHIPS ──────────────────────────────────────────────────────────────────
+document.getElementById('ccInput').addEventListener('keydown', function(e) {
+  if (e.key === 'Enter' || e.key === ',') {
+    e.preventDefault();
+    const v = this.value.trim().replace(/,$/, '');
+    if (v && v.includes('@')) { ccEmails.push(v); renderCCChips(); this.value = ''; }
+  }
+  if (e.key === 'Backspace' && !this.value && ccEmails.length) { ccEmails.pop(); renderCCChips(); }
+});
+function renderCCChips() {
+  const wrap = document.getElementById('ccChips');
+  const input = document.getElementById('ccInput');
+  wrap.querySelectorAll('.chip').forEach(c => c.remove());
+  ccEmails.forEach((email, i) => {
+    const chip = document.createElement('div'); chip.className = 'chip';
+    chip.innerHTML = `${email} <button onclick="ccEmails.splice(${i},1);renderCCChips()">×</button>`;
+    wrap.insertBefore(chip, input);
+  });
+}
+
+// ── JOINER LIST ────────────────────────────────────────────────────────────────
+function renderJoinerList() {
+  if (!joiners.length) return;
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  const ship = document.getElementById('shipFilter').value;
+  const dept = document.getElementById('deptFilter').value;
+  const scheduled = new Set(Object.values(schedule).flat().map(s => s.joiner.e_number));
+  const filtered = joiners.filter(j => {
+    const text = (j.name + j.position + j.ship + j.department + j.e_number).toLowerCase();
+    return (!q || text.includes(q)) && (!ship || j.ship === ship) && (!dept || j.department === dept);
+  });
+  document.getElementById('joinerBadge').textContent = filtered.length;
+  const list = document.getElementById('joinerList');
+  if (!filtered.length) { list.innerHTML = '<div class="empty-msg">No results</div>'; return; }
+  list.innerHTML = '';
+  filtered.forEach(j => {
+    const isSched = scheduled.has(j.e_number);
+    const noEmail = !j.email;
+    // Find which day
+    const schedDate = Object.keys(schedule).find(d => schedule[d].some(s => s.joiner.e_number === j.e_number));
+    const isDl = schedDate && downloadedDays.has(schedDate);
+    const div = document.createElement('div');
+    div.className = 'ji' + (isDl ? ' downloaded' : isSched ? ' scheduled' : '') + (noEmail ? ' no-email' : '');
+    div.innerHTML = `
+      <div class="ji-body">
+        <div class="ji-name">${j.name} ${isDl ? '<span style="color:var(--green);font-size:10px">✓ Downloaded</span>' : ''}</div>
+        <div class="ji-meta">${j.position} · E-${j.e_number} · Embark ${j.embark_date}${schedDate ? ' · 📅 ' + schedDate : ' · <span style="color:var(--amber);font-weight:600">Not scheduled</span>'}${noEmail ? ' · <span style="color:var(--red);font-weight:600">No email</span>' : ''}</div>
+      </div>
+      <div class="ji-ship">${j.ship}</div>`;
+    list.appendChild(div);
+  });
+}
+
+// ── SINGLE SLOT DOWNLOAD ──────────────────────────────────────────────────────
+function downloadSingleSlot(ds, idx) {
+  const slot = schedule[ds] && schedule[ds][idx];
+  if (!slot) return;
+  const event = buildIcsEvent(ds, slot);
+  const ics = buildIcsFile([event]);
+  const safeName = slot.joiner.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+  triggerDownload(ics, `Assessment_${safeName}_${ds}.ics`);
+  downloadedDays.add(ds);
+  document.getElementById('hdrDl').style.display = '';
+  document.getElementById('hdrDl').textContent = downloadedDays.size + ' days downloaded';
+  renderCalendar();
+  renderDayPanel(ds);
+}
+
+// ── MANUAL INVITE ─────────────────────────────────────────────────────────────
+let manualTab = 'search';
+let manualSelectedJoiner = null;
+
+function openManualInviteModal() {
+  manualSelectedJoiner = null;
+  document.getElementById('manualDate').value = selectedDay || todayStr;
+  document.getElementById('manualTime').value = '09:00';
+  document.getElementById('manualSearch').value = '';
+  document.getElementById('manualName').value = '';
+  document.getElementById('manualEmail').value = '';
+  document.getElementById('manualPosition').value = '';
+  document.getElementById('manualShip').value = '';
+  document.getElementById('manualSelectedInfo').style.display = 'none';
+  switchManualTab('search');
+  renderManualJoinerList();
+  document.getElementById('manualModal').style.display = 'flex';
+}
+
+function closeManualModal() {
+  document.getElementById('manualModal').style.display = 'none';
+}
+
+function switchManualTab(tab) {
+  manualTab = tab;
+  document.getElementById('tabSearch').classList.toggle('active', tab === 'search');
+  document.getElementById('tabCustom').classList.toggle('active', tab === 'custom');
+  document.getElementById('manualSearchTab').style.display = tab === 'search' ? '' : 'none';
+  document.getElementById('manualCustomTab').style.display = tab === 'custom' ? '' : 'none';
+}
+
+function renderManualJoinerList() {
+  const q = document.getElementById('manualSearch').value.toLowerCase();
+  const list = document.getElementById('manualJoinerList');
+  const allJoiners = joiners.length ? joiners : [];
+  const filtered = allJoiners.filter(j => {
+    const t = (j.name + j.e_number + j.ship + j.position + j.email).toLowerCase();
+    return !q || t.includes(q);
+  }).slice(0, 40);
+
+  if (!filtered.length) {
+    list.innerHTML = `<div class="empty-msg" style="padding:10px;font-size:11px">${joiners.length ? 'No results' : 'Upload a Joiners Report to search'}</div>`;
+    return;
+  }
+  list.innerHTML = '';
+  filtered.forEach(j => {
+    const div = document.createElement('div');
+    const isSel = manualSelectedJoiner && manualSelectedJoiner.e_number === j.e_number;
+    div.className = 'mji' + (isSel ? ' selected' : '');
+    div.innerHTML = `
+      <div style="flex:1;min-width:0">
+        <div class="mji-name">${j.name}</div>
+        <div class="mji-meta">${j.position} · ${j.ship} · ${j.embark_date}</div>
+      </div>
+      <div style="font-size:10px;background:var(--navy);color:#fff;padding:1px 6px;border-radius:10px;font-weight:600;flex-shrink:0">${j.ship}</div>`;
+    div.onclick = () => {
+      manualSelectedJoiner = j;
+      document.getElementById('manualSelectedInfo').style.display = '';
+      document.getElementById('manualSelName').textContent = j.name;
+      document.getElementById('manualSelMeta').textContent = `${j.position} · ${j.ship} · Embark ${j.embark_date} · ${j.email}`;
+      renderManualJoinerList();
+    };
+    list.appendChild(div);
+  });
+}
+
+function confirmManualInvite() {
+  const date = document.getElementById('manualDate').value;
+  const time = document.getElementById('manualTime').value;
+  if (!date || !time) { alert('Please set a date and time.'); return; }
+
+  let joiner;
+  if (manualTab === 'search') {
+    if (!manualSelectedJoiner) { alert('Please select a joiner from the list.'); return; }
+    joiner = manualSelectedJoiner;
+  } else {
+    const name = document.getElementById('manualName').value.trim();
+    const email = document.getElementById('manualEmail').value.trim();
+    if (!name || !email) { alert('Please enter a name and email.'); return; }
+    if (!email.includes('@')) { alert('Please enter a valid email address.'); return; }
+    joiner = {
+      e_number: 'MANUAL-' + Date.now(),
+      name,
+      email,
+      position: document.getElementById('manualPosition').value.trim() || '',
+      ship: document.getElementById('manualShip').value.trim() || '',
+      embark_date: '',
+      embark_port: '',
+      department: '',
+      cti_office: '',
+      status: ''
+    };
+  }
+
+  const slot = { time, joiner };
+  const event = buildIcsEvent(date, slot);
+  const ics = buildIcsFile([event]);
+  const safeName = joiner.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+  triggerDownload(ics, `Assessment_${safeName}_${date}.ics`);
+  closeManualModal();
+}
+
+// ── INSTRUCTIONS TOGGLE ───────────────────────────────────────────────────────
+function toggleInstructions() {
+  const body = document.getElementById('instrBody');
+  const icon = document.getElementById('instrToggleIcon');
+  const open = body.style.display === '';
+  body.style.display = open ? 'none' : '';
+  icon.style.transform = open ? '' : 'rotate(180deg)';
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+renderCalendar();
+</script>
+</body>
+</html>
