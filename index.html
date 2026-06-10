@@ -121,6 +121,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
 .slot-badge{font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;flex-shrink:0}
 .badge-ready{background:var(--accent-lt);color:var(--accent)}
 .badge-dl{background:var(--green-bg);color:var(--green)}
+.badge-sending{background:#dbeafe;color:#1d4ed8}
+.badge-error{background:var(--red-bg);color:var(--red)}
 
 /* Download panel */
 .dl-panel{background:linear-gradient(135deg,#0f2a5c,#1a3a6e);border-radius:var(--r);padding:18px;margin-bottom:14px;color:#fff}
@@ -265,23 +267,6 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
       </select>
     </div>
     <div class="fr">
-      <label>Teams Meeting Link</label>
-      <input type="url" id="teamsLink" placeholder="https://teams.microsoft.com/l/meetup-join/…" oninput="updateTeamsLinkPreview()">
-      <div style="font-size:10px;color:var(--g400);margin-top:3px">Paste your personal Teams link — embedded into every invite</div>
-    </div>
-    <div id="teamsLinkPreview" style="display:none;margin-bottom:10px">
-      <div style="background:#e8f0fe;border:1px solid #c7d7fc;border-radius:7px;padding:8px 11px;display:flex;align-items:center;gap:8px">
-        <span style="font-size:16px">🟣</span>
-        <div style="flex:1;min-width:0">
-          <div style="font-size:11px;font-weight:700;color:#1a3a6e">Teams link attached</div>
-          <div style="font-size:10px;color:var(--g400);overflow:hidden;text-overflow:ellipsis;white-space:nowrap" id="teamsLinkShort"></div>
-        </div>
-        <div style="display:flex;align-items:center;gap:5px;background:#1a3a6e;color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:10px;flex-shrink:0">
-          <span>⏺</span> Auto-record ON
-        </div>
-      </div>
-    </div>
-    <div class="fr">
       <label>Meeting body</label>
       <textarea id="body" rows="4">You are invited to attend your Pre-Embarkation Language Assessment with CTI Indonesia. This is a required step to confirm your readiness before joining the ship. Please attend punctually and bring any relevant documents. We look forward to seeing you.</textarea>
     </div>
@@ -311,24 +296,19 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
 <!-- ═══ MAIN ═══ -->
 <div class="main">
 
-  <!-- Download panel -->
+  <!-- Send / Download panel -->
   <div class="dl-panel">
-    <h3>📥 Download .ics Calendar Files</h3>
-    <p>No connector or admin rights needed. Download the schedule as .ics files and open in Outlook, Teams, or any calendar app — meetings import instantly with all joiner details included.</p>
+    <h3>🟣 Send Teams Meetings</h3>
+    <p>Creates individual Teams meetings per joiner — unique link, auto-record, sent directly from your calendar via Microsoft 365.</p>
     <div class="dl-options">
-      <div class="dl-option highlight" onclick="downloadAll()">
-        <div class="dl-icon">📦</div>
-        <div class="dl-label">Download All</div>
-        <div class="dl-sub">One .ics with all meetings</div>
-      </div>
-      <div class="dl-option" onclick="downloadByDay()">
+      <div class="dl-option highlight" onclick="sendAll()">
         <div class="dl-icon">📅</div>
-        <div class="dl-label">Download by Day</div>
-        <div class="dl-sub">Separate .ics per day</div>
+        <div class="dl-label">Send All</div>
+        <div class="dl-sub">Every scheduled joiner</div>
       </div>
-      <div class="dl-option" onclick="downloadSelected()">
+      <div class="dl-option" onclick="sendDay(selectedDay)">
         <div class="dl-icon">🗓</div>
-        <div class="dl-label">Selected Day</div>
+        <div class="dl-label">Send Selected Day</div>
         <div class="dl-sub" id="selectedDayLabel">Click a day first</div>
       </div>
       <div class="dl-option" onclick="openManualInviteModal()">
@@ -336,6 +316,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
         <div class="dl-label">Manual Invite</div>
         <div class="dl-sub">One person, any time</div>
       </div>
+      <div class="dl-option" onclick="downloadAll()" style="opacity:.7">
+        <div class="dl-icon">📥</div>
+        <div class="dl-label">Download .ics</div>
+        <div class="dl-sub">Fallback — no connector</div>
+      </div>
+    </div>
+    <div id="sendProgressWrap" style="display:none;margin-top:14px">
+      <div style="height:4px;background:rgba(255,255,255,.15);border-radius:99px;overflow:hidden;margin-bottom:8px">
+        <div id="sendProgressBar" style="height:100%;background:#60a5fa;border-radius:99px;transition:width .3s;width:0%"></div>
+      </div>
+      <div id="sendProgressText" style="font-size:11px;color:#93c5fd"></div>
     </div>
   </div>
 
@@ -604,7 +595,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
 
     <div class="modal-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeManualModal()">Cancel</button>
-      <button class="btn btn-success btn-sm" onclick="confirmManualInvite()">📥 Download .ics</button>
+      <button class="btn btn-success btn-sm" onclick="confirmManualInvite()">📅 Send Teams Invite</button>
     </div>
   </div>
 </div>
@@ -895,7 +886,7 @@ function renderDayPanel(ds) {
   else {
     html += `<button class="btn btn-danger btn-sm" onclick="blockDay('${ds}')">🚫 Block Day</button>`;
     html += `<button class="btn btn-ghost btn-sm" onclick="openBlockModalForDate('${ds}')">⏰ Block Time</button>`;
-    if (slots.length) html += `<button class="btn btn-success btn-sm" onclick="downloadDay('${ds}')">📥 Download Day</button>`;
+    if (slots.length) html += `<button class="btn btn-success btn-sm" onclick="sendDay('${ds}')">📅 Send Day</button>`;
   }
   html += `</div></div>`;
 
@@ -904,11 +895,13 @@ function renderDayPanel(ds) {
   } else if (!slots.length) {
     html += `<div class="empty-msg" style="padding:10px">No meetings on this day.</div>`;
   } else {
-    html += `<div style="font-size:11px;color:var(--g400);margin-bottom:9px">${slots.length} meetings · ${isDl ? '<span style="color:var(--green);font-weight:600">✓ Downloaded</span>' : 'Not yet downloaded'}</div>`;
+    html += `<div style="font-size:11px;color:var(--g400);margin-bottom:9px">${slots.length} meetings · ${isDl ? '<span style="color:var(--green);font-weight:600">✓ Sent</span>' : 'Not yet sent'}</div>`;
     html += `<div class="slot-grid">`;
     slots.forEach((sl, idx) => {
-      const dl = downloadedDays.has(ds);
-      html += `<div class="slot-row ${dl ? 'downloaded' : 'filled'}">
+      const st = sendStatuses[sl.joiner.e_number] || 'pending';
+      const stLabel = st==='sent'?'✓ Sent':st==='sending'?'Sending…':st==='error'?'Error':'Pending';
+      const stClass = st==='sent'?'badge-dl':st==='sending'?'badge-sending':st==='error'?'badge-error':'badge-ready';
+      html += `<div class="slot-row ${st==='sent'?'downloaded':'filled'}" id="slotrow_${sl.joiner.e_number}">
         <div class="slot-time">${sl.time}</div>
         <div class="slot-info">
           <div class="slot-name">${sl.joiner.name}</div>
@@ -916,8 +909,11 @@ function renderDayPanel(ds) {
           <div class="slot-sub">${sl.joiner.email}</div>
         </div>
         <div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end;flex-shrink:0">
-          <span class="slot-badge ${dl ? 'badge-dl' : 'badge-ready'}">${dl ? '✓ Ready' : 'Pending'}</span>
-          <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:10px;white-space:nowrap" onclick="downloadSingleSlot('${ds}',${idx})">📥 .ics</button>
+          <span class="slot-badge ${stClass}" id="slotbadge_${sl.joiner.e_number}">${stLabel}</span>
+          <div style="display:flex;gap:4px">
+            <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:10px" onclick="sendSingleSlot('${ds}',${idx})">📅 Send</button>
+            <button class="btn btn-ghost btn-sm" style="padding:3px 8px;font-size:10px" onclick="downloadSingleSlot('${ds}',${idx})">📥</button>
+          </div>
         </div>
       </div>`;
     });
@@ -1055,62 +1051,130 @@ function triggerDownload(content, filename) {
   URL.revokeObjectURL(url);
 }
 
+// ── SEND STATE ────────────────────────────────────────────────────────────────
+let sendStatuses = {}; // { e_number: 'pending'|'sending'|'sent'|'error' }
+
+function updateSlotBadge(eNum, st) {
+  const badge = document.getElementById('slotbadge_' + eNum);
+  if (!badge) return;
+  const labels = {sent:'✓ Sent', sending:'Sending…', error:'Error', pending:'Pending'};
+  const classes = {sent:'badge-dl', sending:'badge-sending', error:'badge-error', pending:'badge-ready'};
+  badge.className = 'slot-badge ' + (classes[st] || 'badge-ready');
+  badge.textContent = labels[st] || 'Pending';
+}
+
+// ── SEND VIA M365 ─────────────────────────────────────────────────────────────
+async function createTeamsMeeting(slot, dateStr) {
+  const subject = document.getElementById('subject').value.trim() || 'Pre-Embarkation Language Assessment';
+  const body = document.getElementById('body').value.trim();
+  const orgName = document.getElementById('orgName').value.trim();
+  const orgEmail = document.getElementById('orgEmail').value.trim();
+  const joiner = slot.joiner;
+
+  const [h, m] = slot.time.split(':').map(Number);
+  const startDt = new Date(`${dateStr}T${slot.time}:00`);
+  const endDt = new Date(startDt.getTime() + 15 * 60000);
+  const fmt = dt => dt.toISOString();
+
+  const ccList = ccEmails.length ? `CC attendees: ${ccEmails.join(', ')}` : '';
+  const organizerLine = orgName ? `Organizer: ${orgName}${orgEmail ? ' <' + orgEmail + '>' : ''}` : '';
+
+  const prompt = `Create a Microsoft Teams online meeting (calendar event) with these details:
+Subject: "${subject} — ${joiner.name}"
+Start: ${fmt(startDt)}
+End: ${fmt(endDt)}
+Required attendee: ${joiner.email}
+${ccList}
+${organizerLine}
+Body: ${body}
+
+Candidate details: ${joiner.name}, ${joiner.position}, assigned to ${joiner.ship}, embarking ${joiner.embark_date} from ${joiner.embark_port}. E-Number: ${joiner.e_number}.
+
+IMPORTANT:
+- Create as an online Teams meeting with a unique Teams meeting link
+- Enable auto-recording for this meeting
+- Send invite to the attendee
+- Respond with only: DONE if successful, or ERROR: <reason> if not.`;
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 500,
+      messages: [{ role: 'user', content: prompt }],
+      mcp_servers: [{ type: 'url', url: 'https://microsoft365.mcp.claude.com/mcp', name: 'microsoft365' }]
+    })
+  });
+  if (!res.ok) throw new Error('API ' + res.status);
+  const data = await res.json();
+  const text = data.content?.map(b => b.text || '').join('') || '';
+  if (text.trim().toUpperCase().startsWith('ERROR')) throw new Error(text.replace(/^ERROR:\s*/i, '').trim());
+  return true;
+}
+
+async function sendSlots(slots) {
+  if (!slots.length) return;
+  document.getElementById('sendProgressWrap').style.display = '';
+  const bar = document.getElementById('sendProgressBar');
+  const txt = document.getElementById('sendProgressText');
+  let done = 0, sent = 0, errors = 0;
+
+  for (const slot of slots) {
+    const ds = Object.keys(schedule).find(d => schedule[d].some(s => s.joiner.e_number === slot.joiner.e_number));
+    sendStatuses[slot.joiner.e_number] = 'sending';
+    updateSlotBadge(slot.joiner.e_number, 'sending');
+    try {
+      await createTeamsMeeting(slot, ds);
+      sendStatuses[slot.joiner.e_number] = 'sent'; sent++;
+      updateSlotBadge(slot.joiner.e_number, 'sent');
+      downloadedDays.add(ds);
+    } catch(e) {
+      sendStatuses[slot.joiner.e_number] = 'error'; errors++;
+      updateSlotBadge(slot.joiner.e_number, 'error');
+      console.error('Send error for', slot.joiner.name, e.message);
+    }
+    done++;
+    bar.style.width = (done / slots.length * 100) + '%';
+    txt.textContent = `${done}/${slots.length} processed · ${sent} sent · ${errors} errors`;
+  }
+  document.getElementById('hdrDl').style.display = '';
+  document.getElementById('hdrDl').textContent = sent + ' sent';
+  renderCalendar();
+  if (selectedDay) renderDayPanel(selectedDay);
+  renderJoinerList();
+}
+
+async function sendAll() {
+  const allSlots = Object.values(schedule).flat();
+  if (!allSlots.length) { alert('No meetings scheduled. Upload a Joiners Report first.'); return; }
+  const unsent = allSlots.filter(s => sendStatuses[s.joiner.e_number] !== 'sent');
+  if (!unsent.length) { alert('All meetings already sent.'); return; }
+  await sendSlots(unsent);
+}
+
+async function sendDay(ds) {
+  if (!ds) { alert('Click a day on the calendar first.'); return; }
+  const slots = schedule[ds] || [];
+  if (!slots.length) { alert('No meetings on this day.'); return; }
+  await sendSlots(slots);
+}
+
+async function sendSingleSlot(ds, idx) {
+  const slot = schedule[ds] && schedule[ds][idx];
+  if (!slot) return;
+  await sendSlots([slot]);
+}
+
+// ── ICS FALLBACK ──────────────────────────────────────────────────────────────
 function downloadAll() {
   const allDates = Object.keys(schedule).sort();
   if (!allDates.length) { alert('No meetings scheduled yet. Upload a Joiners Report first.'); return; }
   const events = [];
-  allDates.forEach(ds => {
-    schedule[ds].forEach(slot => events.push(buildIcsEvent(ds, slot)));
-  });
+  allDates.forEach(ds => schedule[ds].forEach(slot => events.push(buildIcsEvent(ds, slot))));
   const ics = buildIcsFile(events);
   const orgName = document.getElementById('orgName').value.trim().replace(/\s+/g,'_') || 'CTI';
   triggerDownload(ics, `${orgName}_All_Assessments.ics`);
-  allDates.forEach(ds => downloadedDays.add(ds));
-  document.getElementById('hdrDl').style.display = '';
-  document.getElementById('hdrDl').textContent = downloadedDays.size + ' days downloaded';
-  renderCalendar();
-  if (selectedDay) renderDayPanel(selectedDay);
-}
-
-function downloadByDay() {
-  const allDates = Object.keys(schedule).sort();
-  if (!allDates.length) { alert('No meetings scheduled yet.'); return; }
-  const orgName = document.getElementById('orgName').value.trim().replace(/\s+/g,'_') || 'CTI';
-  allDates.forEach(ds => {
-    const events = schedule[ds].map(slot => buildIcsEvent(ds, slot));
-    const ics = buildIcsFile(events);
-    triggerDownload(ics, `${orgName}_Assessments_${ds}.ics`);
-    downloadedDays.add(ds);
-  });
-  document.getElementById('hdrDl').style.display = '';
-  document.getElementById('hdrDl').textContent = downloadedDays.size + ' days downloaded';
-  renderCalendar();
-}
-
-function downloadDay(ds) {
-  const slots = schedule[ds];
-  if (!slots || !slots.length) { alert('No meetings on this day.'); return; }
-  const events = slots.map(slot => buildIcsEvent(ds, slot));
-  const ics = buildIcsFile(events);
-  const orgName = document.getElementById('orgName').value.trim().replace(/\s+/g,'_') || 'CTI';
-  triggerDownload(ics, `${orgName}_Assessments_${ds}.ics`);
-  downloadedDays.add(ds);
-  document.getElementById('hdrDl').style.display = '';
-  document.getElementById('hdrDl').textContent = downloadedDays.size + ' days downloaded';
-  renderCalendar();
-  renderDayPanel(ds);
-}
-
-function downloadSelected() {
-  if (!selectedDay) { alert('Click a day on the calendar first.'); return; }
-  downloadDay(selectedDay);
-}
-
-function downloadUnscheduled() {
-  const scheduled = new Set(Object.values(schedule).flat().map(s => s.joiner.e_number));
-  const unscheduled = joiners.filter(j => !scheduled.has(j.e_number) && j.email);
-  if (!unscheduled.length) { alert('All joiners with emails are scheduled.'); return; }
-  alert(`${unscheduled.length} joiner(s) could not be scheduled within the assessment window. Consider extending the window or checking their embark dates.`);
 }
 
 // ── BLOCKS ────────────────────────────────────────────────────────────────────
@@ -1324,7 +1388,7 @@ function renderManualJoinerList() {
   });
 }
 
-function confirmManualInvite() {
+async function confirmManualInvite() {
   const date = document.getElementById('manualDate').value;
   const time = document.getElementById('manualTime').value;
   if (!date || !time) { alert('Please set a date and time.'); return; }
@@ -1340,24 +1404,31 @@ function confirmManualInvite() {
     if (!email.includes('@')) { alert('Please enter a valid email address.'); return; }
     joiner = {
       e_number: 'MANUAL-' + Date.now(),
-      name,
-      email,
+      name, email,
       position: document.getElementById('manualPosition').value.trim() || '',
       ship: document.getElementById('manualShip').value.trim() || '',
-      embark_date: '',
-      embark_port: '',
-      department: '',
-      cti_office: '',
-      status: ''
+      embark_date: '', embark_port: '', department: '', cti_office: '', status: ''
     };
   }
 
   const slot = { time, joiner };
-  const event = buildIcsEvent(date, slot);
-  const ics = buildIcsFile([event]);
-  const safeName = joiner.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-  triggerDownload(ics, `Assessment_${safeName}_${date}.ics`);
-  closeManualModal();
+  const btn = document.querySelector('#manualModal .btn-success');
+  btn.disabled = true; btn.textContent = '⏳ Sending…';
+
+  try {
+    await createTeamsMeeting(slot, date);
+    btn.disabled = false; btn.textContent = '📅 Send Teams Invite';
+    closeManualModal();
+    alert(`✅ Teams invite sent to ${joiner.name} for ${date} at ${time}`);
+  } catch(e) {
+    // Fallback to .ics
+    btn.disabled = false; btn.textContent = '📅 Send Teams Invite';
+    const event = buildIcsEvent(date, slot);
+    const ics = buildIcsFile([event]);
+    const safeName = joiner.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+    triggerDownload(ics, `Assessment_${safeName}_${date}.ics`);
+    closeManualModal();
+  }
 }
 
 // ── INSTRUCTIONS TOGGLE ───────────────────────────────────────────────────────
