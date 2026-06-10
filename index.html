@@ -272,6 +272,10 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
       </select>
     </div>
     <div class="fr">
+      <label>Teams Meeting Link <span style="font-weight:400;text-transform:none;font-size:10px;color:var(--g400)">(optional — adds Join button to every invite)</span></label>
+      <input type="url" id="teamsLink" placeholder="https://teams.microsoft.com/l/meetup-join/…">
+    </div>
+    <div class="fr">
       <label>Meeting body</label>
       <textarea id="body" rows="4">You are invited to attend your Pre-Embarkation Language Assessment with CTI Indonesia. This is a required step to confirm your readiness before joining the ship. Please attend punctually and bring any relevant documents. We look forward to seeing you.</textarea>
     </div>
@@ -303,8 +307,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
 
   <!-- Send / Download panel -->
   <div class="dl-panel">
-    <h3>🟣 Teams Meeting Invites</h3>
-    <p>Click <strong>Invite</strong> on any joiner below to send their individual Teams meeting — auto-assigned to the next available slot. Or use the options below.</p>
+    <h3>📅 Assessment Invites</h3>
+    <p>Click <strong>📥 Invite</strong> on any joiner to download their individual .ics file. Open it in Outlook to send — each invite includes your Teams link and all assessment details.</p>
     <div class="dl-options" style="grid-template-columns:1fr 1fr 1fr">
       <div class="dl-option" onclick="sendDay(selectedDay)">
         <div class="dl-icon">🗓</div>
@@ -595,7 +599,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
 
     <div class="modal-actions">
       <button class="btn btn-ghost btn-sm" onclick="closeManualModal()">Cancel</button>
-      <button class="btn btn-success btn-sm" onclick="confirmManualInvite()">📅 Send Teams Invite</button>
+      <button class="btn btn-success btn-sm" onclick="confirmManualInvite()">📥 Download .ics</button>
     </div>
   </div>
 </div>
@@ -969,7 +973,8 @@ function buildIcsEvent(dateStr, slot) {
   const body = document.getElementById('body').value.trim();
   const orgName = document.getElementById('orgName').value.trim();
   const orgEmail = document.getElementById('orgEmail').value.trim();
-  const teamsLink = document.getElementById('teamsLink').value.trim();
+  const teamsLinkEl = document.getElementById('teamsLink');
+  const teamsLink = teamsLinkEl ? teamsLinkEl.value.trim() : '';
   const joiner = slot.joiner;
 
   const startTs = icsTimestamp(dateStr, slot.time);
@@ -1109,20 +1114,12 @@ async function inviteJoiner(eNumber) {
     return;
   }
 
-  // Update button to sending state
-  sendStatuses[eNumber] = 'sending';
-  const btn = document.getElementById('jibtn_' + eNumber);
-  if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
-
-  try {
-    await createTeamsMeeting(assignedSlot, assignedDate);
-    sendStatuses[eNumber] = 'sent';
-    downloadedDays.add(assignedDate);
-    document.getElementById('hdrDl').style.display = '';
-    document.getElementById('hdrDl').textContent = Object.values(sendStatuses).filter(s=>s==='sent').length + ' sent';
-  } catch(e) {
-    sendStatuses[eNumber] = 'error';
-  }
+  // Download individual .ics and mark as done
+  downloadIcsForSlot(assignedSlot, assignedDate);
+  sendStatuses[eNumber] = 'sent';
+  downloadedDays.add(assignedDate);
+  document.getElementById('hdrDl').style.display = '';
+  document.getElementById('hdrDl').textContent = Object.values(sendStatuses).filter(s=>s==='sent').length + ' .ics saved';
 
   renderCalendar();
   if (selectedDay) renderDayPanel(selectedDay);
@@ -1130,97 +1127,60 @@ async function inviteJoiner(eNumber) {
 }
 
 // ── SEND STATE ────────────────────────────────────────────────────────────────
-let sendStatuses = {}; // { e_number: 'pending'|'sending'|'sent'|'error' }
+let sendStatuses = {}; // { e_number: 'pending'|'sent'|'error' }
 
 function updateSlotBadge(eNum, st) {
   const badge = document.getElementById('slotbadge_' + eNum);
   if (!badge) return;
-  const labels = {sent:'✓ Sent', sending:'Sending…', error:'Error', pending:'Pending'};
-  const classes = {sent:'badge-dl', sending:'badge-sending', error:'badge-error', pending:'badge-ready'};
+  const labels = {sent:'✓ .ics saved', error:'Error', pending:'Pending'};
+  const classes = {sent:'badge-dl', error:'badge-error', pending:'badge-ready'};
   badge.className = 'slot-badge ' + (classes[st] || 'badge-ready');
   badge.textContent = labels[st] || 'Pending';
 }
 
-// ── SEND VIA M365 ─────────────────────────────────────────────────────────────
-async function createTeamsMeeting(slot, dateStr) {
-  const subject = document.getElementById('subject').value.trim() || 'Pre-Embarkation Language Assessment';
-  const body = document.getElementById('body').value.trim();
-  const orgName = document.getElementById('orgName').value.trim();
-  const orgEmail = document.getElementById('orgEmail').value.trim();
-  const joiner = slot.joiner;
-
-  const [h, m] = slot.time.split(':').map(Number);
-  const startDt = new Date(`${dateStr}T${slot.time}:00`);
-  const endDt = new Date(startDt.getTime() + 15 * 60000);
-  const fmt = dt => dt.toISOString();
-
-  const ccList = ccEmails.length ? `CC attendees: ${ccEmails.join(', ')}` : '';
-  const organizerLine = orgName ? `Organizer: ${orgName}${orgEmail ? ' <' + orgEmail + '>' : ''}` : '';
-
-  const prompt = `Create a Microsoft Teams online meeting (calendar event) with these details:
-Subject: "${subject} — ${joiner.name}"
-Start: ${fmt(startDt)}
-End: ${fmt(endDt)}
-Required attendee: ${joiner.email}
-${ccList}
-${organizerLine}
-Body: ${body}
-
-Candidate details: ${joiner.name}, ${joiner.position}, assigned to ${joiner.ship}, embarking ${joiner.embark_date} from ${joiner.embark_port}. E-Number: ${joiner.e_number}.
-
-IMPORTANT:
-- Create as an online Teams meeting with a unique Teams meeting link
-- Enable auto-recording for this meeting
-- Send invite to the attendee
-- Respond with only: DONE if successful, or ERROR: <reason> if not.`;
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: 500,
-      messages: [{ role: 'user', content: prompt }],
-      mcp_servers: [{ type: 'url', url: 'https://microsoft365.mcp.claude.com/mcp', name: 'microsoft365' }]
-    })
-  });
-  if (!res.ok) throw new Error('API ' + res.status);
-  const data = await res.json();
-  const text = data.content?.map(b => b.text || '').join('') || '';
-  if (text.trim().toUpperCase().startsWith('ERROR')) throw new Error(text.replace(/^ERROR:\s*/i, '').trim());
-  return true;
+// ── ICS-BASED INVITE (works from any host, no API needed) ─────────────────────
+function downloadIcsForSlot(slot, dateStr) {
+  const event = buildIcsEvent(dateStr, slot);
+  const ics = buildIcsFile([event]);
+  const safeName = slot.joiner.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+  triggerDownload(ics, `Assessment_${safeName}_${dateStr}.ics`);
 }
 
-async function sendSlots(slots) {
+function sendSlots(slots) {
   if (!slots.length) return;
-  document.getElementById('sendProgressWrap').style.display = '';
-  const bar = document.getElementById('sendProgressBar');
-  const txt = document.getElementById('sendProgressText');
-  let done = 0, sent = 0, errors = 0;
-
-  for (const slot of slots) {
+  const events = [];
+  slots.forEach(slot => {
     const ds = Object.keys(schedule).find(d => schedule[d].some(s => s.joiner.e_number === slot.joiner.e_number));
-    sendStatuses[slot.joiner.e_number] = 'sending';
-    updateSlotBadge(slot.joiner.e_number, 'sending');
-    try {
-      await createTeamsMeeting(slot, ds);
-      sendStatuses[slot.joiner.e_number] = 'sent'; sent++;
-      updateSlotBadge(slot.joiner.e_number, 'sent');
+    if (ds) {
+      events.push(buildIcsEvent(ds, slot));
+      sendStatuses[slot.joiner.e_number] = 'sent';
       downloadedDays.add(ds);
-    } catch(e) {
-      sendStatuses[slot.joiner.e_number] = 'error'; errors++;
-      updateSlotBadge(slot.joiner.e_number, 'error');
-      console.error('Send error for', slot.joiner.name, e.message);
+      updateSlotBadge(slot.joiner.e_number, 'sent');
     }
-    done++;
-    bar.style.width = (done / slots.length * 100) + '%';
-    txt.textContent = `${done}/${slots.length} processed · ${sent} sent · ${errors} errors`;
+  });
+  if (events.length) {
+    const ics = buildIcsFile(events);
+    const orgName = document.getElementById('orgName').value.trim().replace(/\s+/g,'_') || 'CTI';
+    triggerDownload(ics, `${orgName}_Assessments_${new Date().toISOString().split('T')[0]}.ics`);
   }
   document.getElementById('hdrDl').style.display = '';
-  document.getElementById('hdrDl').textContent = sent + ' sent';
+  document.getElementById('hdrDl').textContent = Object.values(sendStatuses).filter(s=>s==='sent').length + ' .ics saved';
   renderCalendar();
   if (selectedDay) renderDayPanel(selectedDay);
   renderJoinerList();
+}
+
+async function sendDay(ds) {
+  if (!ds) { alert('Click a day on the calendar first.'); return; }
+  const slots = schedule[ds] || [];
+  if (!slots.length) { alert('No meetings on this day.'); return; }
+  sendSlots(slots);
+}
+
+async function sendSingleSlot(ds, idx) {
+  const slot = schedule[ds] && schedule[ds][idx];
+  if (!slot) return;
+  sendSlots([slot]);
 }
 
 async function sendAll() {
@@ -1504,7 +1464,7 @@ function renderManualJoinerList() {
   });
 }
 
-async function confirmManualInvite() {
+function confirmManualInvite() {
   const date = document.getElementById('manualDate').value;
   const time = document.getElementById('manualTime').value;
   if (!date || !time) { alert('Please set a date and time.'); return; }
@@ -1528,23 +1488,11 @@ async function confirmManualInvite() {
   }
 
   const slot = { time, joiner };
-  const btn = document.querySelector('#manualModal .btn-success');
-  btn.disabled = true; btn.textContent = '⏳ Sending…';
-
-  try {
-    await createTeamsMeeting(slot, date);
-    btn.disabled = false; btn.textContent = '📅 Send Teams Invite';
-    closeManualModal();
-    alert(`✅ Teams invite sent to ${joiner.name} for ${date} at ${time}`);
-  } catch(e) {
-    // Fallback to .ics
-    btn.disabled = false; btn.textContent = '📅 Send Teams Invite';
-    const event = buildIcsEvent(date, slot);
-    const ics = buildIcsFile([event]);
-    const safeName = joiner.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
-    triggerDownload(ics, `Assessment_${safeName}_${date}.ics`);
-    closeManualModal();
-  }
+  const event = buildIcsEvent(date, slot);
+  const ics = buildIcsFile([event]);
+  const safeName = joiner.name.replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
+  triggerDownload(ics, `Assessment_${safeName}_${date}.ics`);
+  closeManualModal();
 }
 
 // ── INSTRUCTIONS TOGGLE ───────────────────────────────────────────────────────
