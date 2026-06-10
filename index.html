@@ -192,7 +192,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
       <div class="logo-divider"></div>
       <div>
         <div class="logo-product">Assessment Scheduler <em>· Pre-Embarkation</em></div>
-        <div class="logo-sub">15-min individual slots · .ics download · No connector required</div>
+        <div class="logo-sub">15-min individual slots · Individual Teams meetings · Auto-record</div>
       </div>
     </div>
   </div>
@@ -395,19 +395,19 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
         </div>
       </div>
 
-      <!-- Section B: Download & Import -->
+      <!-- Section B: Send via Teams -->
       <div style="padding:18px 20px;border-bottom:1px solid var(--g100)">
-        <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">Part 2 — Download &amp; Import into Outlook</div>
+        <div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.8px;margin-bottom:14px">Part 2 — Send Teams Meeting Invites</div>
 
         <div style="display:flex;flex-direction:column;gap:0">
 
           <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
             <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">1</div>
             <div>
-              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Download the .ics file</div>
-              <div style="font-size:12px;color:var(--g400);line-height:1.6">Click <strong style="color:var(--text)">📦 Download All</strong> to get one file containing every meeting. Or use <strong style="color:var(--text)">Download by Day</strong> to get separate files per day — useful if different staff handle different days.</div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Click "Send All"</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Click <strong style="color:var(--text)">📅 Send All</strong> in the top panel. The app creates one individual Teams meeting per joiner via your Microsoft 365 account — each with a <strong style="color:var(--text)">unique Teams link</strong> and auto-record enabled.</div>
               <div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 11px;font-size:11px;color:var(--green)">
-                <strong>Tip:</strong> Click any day on the calendar first, then use <strong>Selected Day</strong> to download just that day's meetings.
+                <strong>Tip:</strong> Click any day on the calendar first, then use <strong>Send Selected Day</strong> to send just that day's meetings.
               </div>
             </div>
           </div>
@@ -415,42 +415,35 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
           <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
             <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">2</div>
             <div>
-              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Open the file in Outlook</div>
-              <div style="font-size:12px;color:var(--g400);line-height:1.6"><strong style="color:var(--text)">Double-click</strong> the downloaded <code style="background:var(--g100);padding:1px 5px;border-radius:4px;font-size:11px">.ics</code> file. Outlook opens automatically and shows a preview of the import.</div>
-              <div style="margin-top:8px;background:var(--g100);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--g600)">
-                📌 Works with <strong>Outlook 2016, 2019, 2021, Microsoft 365 Outlook</strong>, and Outlook on the web (drag .ics into calendar).
-              </div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Invites send from your account</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Each meeting is created on <strong style="color:var(--text)">your Microsoft 365 calendar</strong> and the invite is sent from your email address. The joiner receives a standard Teams meeting invite they can accept or add to their calendar.</div>
             </div>
           </div>
 
           <div style="display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--g100)">
             <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">3</div>
             <div>
-              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Click "Import" in Outlook</div>
-              <div style="font-size:12px;color:var(--g400);line-height:1.6">In the Outlook import dialog, click <strong style="color:var(--text)">Import</strong>. All meetings are added to your calendar instantly — each joiner receives their individual invite with the assessment details, date, and time.</div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Each joiner gets their own private Teams link</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Unlike a shared room link, every invite contains a <strong style="color:var(--text)">unique Teams meeting URL</strong>. Only that joiner and the organizer are in the meeting — fully private and separate from other sessions.</div>
             </div>
           </div>
 
           <div style="display:flex;gap:14px;padding:12px 0">
-            <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:circle;flex-shrink:0;margin-top:2px">4</div>
+            <div style="width:28px;height:28px;border-radius:50%;background:var(--green);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:2px">4</div>
             <div>
-              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Outlook sends the invites from your account</div>
-              <div style="font-size:12px;color:var(--g400);line-height:1.6">Once imported, Outlook sends the meeting request <strong style="color:var(--text)">from your email address</strong> to each joiner. They receive a standard calendar invite they can accept, decline, or add to their own calendar. A <strong style="color:var(--text)">Teams link</strong> is auto-generated if your Outlook is connected to Teams.</div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:3px">Auto-record starts automatically</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">Each meeting is created with auto-record enabled. Recording starts the moment the meeting begins — no manual action needed. Requires your Microsoft 365 Teams policy to allow cloud recording.</div>
+              <div style="margin-top:8px;background:var(--g100);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--g600)">
+                📌 If auto-record doesn't trigger, ask your IT admin to enable <strong>Allow cloud recording</strong> in Teams meeting policies.
+              </div>
             </div>
           </div>
 
           <div style="display:flex;gap:14px;padding:12px 0;border-top:1px solid var(--g100)">
-            <div style="font-size:20px;margin-top:2px">🟣</div>
+            <div style="font-size:20px;margin-top:2px">📥</div>
             <div>
-              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">How to get your Teams meeting link</div>
-              <div style="font-size:12px;color:var(--g400);line-height:1.6;margin-bottom:8px">To embed a Teams link into every invite (with auto-record), paste your personal meeting link into the <strong style="color:var(--text)">Teams Meeting Link</strong> field in Step 3.</div>
-              <div style="display:flex;flex-direction:column;gap:6px">
-                <div style="background:var(--g100);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--g600);display:flex;gap:8px"><span style="font-weight:700;color:var(--text);flex-shrink:0">Option A</span> Open <strong>Teams</strong> → Click <strong>Calendar</strong> → <strong>New Meeting</strong> → copy the Join link from the invite. Use this link for all invites.</div>
-                <div style="background:var(--g100);border-radius:7px;padding:8px 11px;font-size:11px;color:var(--g600);display:flex;gap:8px"><span style="font-weight:700;color:var(--text);flex-shrink:0">Option B</span> In Teams → go to your <strong>Profile</strong> → <strong>Meet Now</strong> → <strong>Get a link to share</strong> — copy that link. It's a permanent meeting room link tied to your account.</div>
-              </div>
-              <div style="margin-top:8px;background:#fef3c7;border:1px solid #fcd34d;border-radius:6px;padding:7px 11px;font-size:11px;color:var(--amber)">
-                ⚠️ <strong>Auto-record note:</strong> The <code style="background:rgba(0,0,0,.06);padding:1px 4px;border-radius:3px">X-MS-OLK-AUTORECORD:TRUE</code> flag is written into every .ics. Outlook passes this to Teams which starts recording automatically when the meeting begins. This requires your Teams policy to allow recording — check with your IT admin if it doesn't trigger.
-              </div>
+              <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">.ics download — fallback option</div>
+              <div style="font-size:12px;color:var(--g400);line-height:1.6">If the Teams connector is unavailable, use <strong style="color:var(--text)">📥 Download .ics</strong> as a fallback. Open the file in Outlook, click Import, and Outlook will send the invites from your account instead.</div>
             </div>
           </div>
 
@@ -464,17 +457,17 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
           <div style="font-size:20px;margin-top:2px">✍️</div>
           <div>
             <div style="font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px">For individual or ad-hoc assessments</div>
-            <div style="font-size:12px;color:var(--g400);line-height:1.6;margin-bottom:8px">Use <strong style="color:var(--text)">✍️ Manual Invite</strong> to create a single assessment for anyone — whether they're in the joiner list or not. Two options:</div>
+            <div style="font-size:12px;color:var(--g400);line-height:1.6;margin-bottom:8px">Use <strong style="color:var(--text)">✍️ Manual Invite</strong> to send a single Teams meeting to anyone — whether they're in the joiner list or not. Two options:</div>
             <div style="display:flex;flex-direction:column;gap:7px">
               <div style="background:var(--g100);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--g600)">
-                <strong style="color:var(--text)">Pick from Joiner List</strong> — search and select any New Hire from the uploaded file, set a custom date and time, download their individual .ics.
+                <strong style="color:var(--text)">Pick from Joiner List</strong> — search and select any New Hire from the uploaded file, set a custom date and time, send their individual Teams invite.
               </div>
               <div style="background:var(--g100);border-radius:7px;padding:9px 12px;font-size:12px;color:var(--g600)">
                 <strong style="color:var(--text)">Enter Manually</strong> — type any name, email, position and ship. Useful for re-assessments, walk-ins, or candidates not in the current file.
               </div>
             </div>
             <div style="margin-top:8px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:8px 11px;font-size:11px;color:var(--green)">
-              You can also click <strong>📥 .ics</strong> on any individual slot row in the day panel to download just that one meeting.
+              You can also click <strong>📅 Send</strong> on any individual slot row in the day panel to send just that one meeting.
             </div>
           </div>
         </div>
@@ -484,8 +477,8 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
       <div style="padding:18px 20px">
         <div style="font-size:11px;font-weight:700;color:var(--g400);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px">Quick FAQ</div>
         <div style="display:flex;flex-direction:column;gap:10px">
-          <div style="font-size:12px"><strong style="color:var(--text)">Does this need any connectors or admin access?</strong><br><span style="color:var(--g400)">No. The app runs entirely in your browser. The .ics format is a universal standard — no Microsoft 365 connector, no permissions, no installation required.</span></div>
-          <div style="font-size:12px"><strong style="color:var(--text)">Can multiple staff use the same file?</strong><br><span style="color:var(--g400)">Yes. Each person opens the app, enters their own name and email in Step 2, and downloads their own .ics. The organizer on each invite will be whoever fills in their details.</span></div>
+          <div style="font-size:12px"><strong style="color:var(--text)">Does this need a Microsoft 365 connector?</strong><br><span style="color:var(--g400)">Yes — the app uses the Microsoft 365 connector to create real Teams meetings directly from your calendar. Make sure you're signed into Claude.ai with your CTI Microsoft 365 account. A .ics fallback is available if the connector is unavailable.</span></div>
+          <div style="font-size:12px"><strong style="color:var(--text)">Can multiple staff use this tool?</strong><br><span style="color:var(--g400)">Yes. Each staff member opens the app, fills in their own name and email in Step 2, and sends invites. The meetings are created on their own calendar and the invites come from their account.</span></div>
           <div style="font-size:12px"><strong style="color:var(--text)">What if a joiner doesn't have an email in the file?</strong><br><span style="color:var(--g400)">They appear flagged in amber in the joiner list. Use Manual Invite → Enter Manually to create their invite once you have their email.</span></div>
           <div style="font-size:12px"><strong style="color:var(--text)">What if too many joiners can't fit in the time window?</strong><br><span style="color:var(--g400)">The app continues to the next available day automatically. Check the calendar — meetings will spread across multiple days. Extend the window or adjust working hours if needed.</span></div>
         </div>
