@@ -149,7 +149,7 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
 /* Joiner list */
 .joiner-search{display:flex;gap:6px;margin-bottom:9px;flex-wrap:wrap}
 .joiner-search input,.joiner-search select{flex:1;min-width:100px;font-size:12px}
-.joiner-list{max-height:300px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
+.joiner-list{max-height:420px;overflow-y:auto;display:flex;flex-direction:column;gap:4px}
 .ji{display:flex;align-items:center;gap:8px;padding:6px 8px;border:1.5px solid var(--g100);border-radius:6px;transition:all .13s}
 .ji.scheduled{background:var(--accent-lt);border-color:var(--accent)}
 .ji.no-email{background:var(--amber-bg);border-color:#fcd34d}
@@ -298,23 +298,18 @@ input:focus,select:focus,textarea:focus{border-color:var(--accent);background:#f
 
   <!-- Send / Download panel -->
   <div class="dl-panel">
-    <h3>🟣 Send Teams Meetings</h3>
-    <p>Creates individual Teams meetings per joiner — unique link, auto-record, sent directly from your calendar via Microsoft 365.</p>
-    <div class="dl-options">
-      <div class="dl-option highlight" onclick="sendAll()">
-        <div class="dl-icon">📅</div>
-        <div class="dl-label">Send All</div>
-        <div class="dl-sub">Every scheduled joiner</div>
-      </div>
+    <h3>🟣 Teams Meeting Invites</h3>
+    <p>Click <strong>Invite</strong> on any joiner below to send their individual Teams meeting — auto-assigned to the next available slot. Or use the options below.</p>
+    <div class="dl-options" style="grid-template-columns:1fr 1fr 1fr">
       <div class="dl-option" onclick="sendDay(selectedDay)">
         <div class="dl-icon">🗓</div>
         <div class="dl-label">Send Selected Day</div>
-        <div class="dl-sub" id="selectedDayLabel">Click a day first</div>
+        <div class="dl-sub" id="selectedDayLabel">Click a day on calendar first</div>
       </div>
       <div class="dl-option" onclick="openManualInviteModal()">
         <div class="dl-icon">✍️</div>
         <div class="dl-label">Manual Invite</div>
-        <div class="dl-sub">One person, any time</div>
+        <div class="dl-sub">Any person, any time</div>
       </div>
       <div class="dl-option" onclick="downloadAll()" style="opacity:.7">
         <div class="dl-icon">📥</div>
@@ -1051,6 +1046,84 @@ function triggerDownload(content, filename) {
   URL.revokeObjectURL(url);
 }
 
+// ── INVITE SINGLE JOINER FROM LIST ───────────────────────────────────────────
+async function inviteJoiner(eNumber) {
+  const joiner = joiners.find(j => j.e_number === eNumber);
+  if (!joiner) return;
+
+  // Find their pre-assigned slot from the schedule
+  let assignedDate = null;
+  let assignedSlot = null;
+  for (const [ds, slots] of Object.entries(schedule)) {
+    const slot = slots.find(s => s.joiner.e_number === eNumber);
+    if (slot) { assignedDate = ds; assignedSlot = slot; break; }
+  }
+
+  // If not in schedule, find next available slot within their embark window
+  if (!assignedSlot) {
+    const windowDays = parseInt(document.getElementById('windowDays').value);
+    const dailyStart = document.getElementById('dailyStart').value;
+    const dailyEnd = document.getElementById('dailyEnd').value;
+    const embark = new Date(joiner.embark_date + 'T12:00:00');
+    const winStart = new Date(embark); winStart.setDate(winStart.getDate() - windowDays);
+    const winEnd = new Date(embark); winEnd.setDate(winEnd.getDate() - 1);
+
+    const usedSlots = {};
+    Object.entries(schedule).forEach(([ds, slots]) => {
+      usedSlots[ds] = new Set(slots.map(s => s.time));
+    });
+
+    const cursor = new Date(winStart);
+    outer: while (cursor <= winEnd) {
+      const ds = cursor.toISOString().split('T')[0];
+      const isBlocked = blocks.some(b => b.type === 'day' && b.date === ds);
+      if (!isBlocked) {
+        const [sh, sm] = dailyStart.split(':').map(Number);
+        const [eh, em] = dailyEnd.split(':').map(Number);
+        const total = Math.floor(((eh*60+em)-(sh*60+sm))/15);
+        for (let i = 0; i < total; i++) {
+          const mins = sh*60+sm+i*15;
+          const t = `${String(Math.floor(mins/60)).padStart(2,'0')}:${String(mins%60).padStart(2,'0')}`;
+          const isTimeBlocked = blocks.some(b => b.type==='range' && b.date===ds && t>=b.startTime && t<b.endTime);
+          if (!isTimeBlocked && !(usedSlots[ds] && usedSlots[ds].has(t))) {
+            assignedDate = ds;
+            assignedSlot = { time: t, joiner };
+            if (!schedule[ds]) schedule[ds] = [];
+            schedule[ds].push(assignedSlot);
+            schedule[ds].sort((a,b) => a.time.localeCompare(b.time));
+            break outer;
+          }
+        }
+      }
+      cursor.setDate(cursor.getDate() + 1);
+    }
+  }
+
+  if (!assignedSlot || !assignedDate) {
+    alert(`No available slot found for ${joiner.name} within their assessment window.\nTry extending the window or use Manual Invite to set a specific time.`);
+    return;
+  }
+
+  // Update button to sending state
+  sendStatuses[eNumber] = 'sending';
+  const btn = document.getElementById('jibtn_' + eNumber);
+  if (btn) { btn.textContent = 'Sending…'; btn.disabled = true; }
+
+  try {
+    await createTeamsMeeting(assignedSlot, assignedDate);
+    sendStatuses[eNumber] = 'sent';
+    downloadedDays.add(assignedDate);
+    document.getElementById('hdrDl').style.display = '';
+    document.getElementById('hdrDl').textContent = Object.values(sendStatuses).filter(s=>s==='sent').length + ' sent';
+  } catch(e) {
+    sendStatuses[eNumber] = 'error';
+  }
+
+  renderCalendar();
+  if (selectedDay) renderDayPanel(selectedDay);
+  renderJoinerList();
+}
+
 // ── SEND STATE ────────────────────────────────────────────────────────────────
 let sendStatuses = {}; // { e_number: 'pending'|'sending'|'sent'|'error' }
 
@@ -1307,14 +1380,31 @@ function renderJoinerList() {
     const noEmail = !j.email;
     const schedDate = Object.keys(schedule).find(d => schedule[d].some(s => s.joiner.e_number === j.e_number));
     const isDl = schedDate && downloadedDays.has(schedDate);
+    const st = sendStatuses[j.e_number];
+    const isSent = st === 'sent';
+    const isSending = st === 'sending';
     const div = document.createElement('div');
-    div.className = 'ji' + (isDl ? ' downloaded' : isSched ? ' scheduled' : '') + (noEmail ? ' no-email' : '');
+    div.className = 'ji' + (isSent ? ' downloaded' : isSched ? ' scheduled' : '') + (noEmail ? ' no-email' : '');
+    div.id = 'jirow_' + j.e_number;
+
+    let btnHtml = '';
+    if (noEmail) {
+      btnHtml = `<span style="font-size:10px;color:var(--amber);font-weight:600;flex-shrink:0">No email</span>`;
+    } else if (isSent) {
+      btnHtml = `<span style="font-size:10px;background:var(--green-bg);color:var(--green);font-weight:700;padding:3px 9px;border-radius:10px;flex-shrink:0">✓ Sent</span>`;
+    } else if (isSending) {
+      btnHtml = `<span style="font-size:10px;background:#dbeafe;color:#1d4ed8;font-weight:700;padding:3px 9px;border-radius:10px;flex-shrink:0" id="jibtn_${j.e_number}">Sending…</span>`;
+    } else {
+      btnHtml = `<button class="btn btn-primary btn-sm" style="font-size:11px;padding:5px 12px;flex-shrink:0" onclick="inviteJoiner('${j.e_number}')" id="jibtn_${j.e_number}">📅 Invite</button>`;
+    }
+
     div.innerHTML = `
       <div class="ji-body">
-        <div class="ji-name">${j.name} ${isDl ? '<span style="color:var(--green);font-size:10px">✓ Sent</span>' : ''}</div>
-        <div class="ji-meta">${j.position} · E-${j.e_number} · Embark ${j.embark_date}${schedDate ? ' · 📅 ' + schedDate : ' · <span style="color:var(--amber);font-weight:600">Outside window</span>'}${noEmail ? ' · <span style="color:var(--red);font-weight:600">No email</span>' : ''}</div>
+        <div class="ji-name">${j.name}</div>
+        <div class="ji-meta">${j.position} · E-${j.e_number} · Embark ${j.embark_date}${schedDate ? ' · 📅 ' + schedDate : ''}${noEmail ? ' · <span style="color:var(--red);font-weight:600">No email</span>' : ''}</div>
       </div>
-      <div class="ji-ship">${j.ship}</div>`;
+      <div class="ji-ship" style="margin-right:8px">${j.ship}</div>
+      ${btnHtml}`;
     list.appendChild(div);
   });
 }
