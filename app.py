@@ -326,7 +326,7 @@ Candidate: {joiner['name']}, {joiner['position']}, Ship: {joiner['ship']}, Embar
 Create as an online Teams meeting with a unique link. Enable auto-recording. Send invite to all attendees.
 Reply ONLY: DONE if successful, or ERROR: <reason> if not."""
 
-    client = anthropic.Anthropic()
+    client = anthropic.Anthropic(api_key=st.secrets["ANTHROPIC_API_KEY"])
     response = client.beta.messages.create(
         model="claude-sonnet-4-20250514",
         max_tokens=500,
